@@ -1,0 +1,139 @@
+import React from "react";
+import { Save } from "lucide-react";
+import { useTheme } from "../themes";
+
+interface LLMGraphRAGProps {
+  llmProvider: string;
+  modelName: string;
+  embeddingModel: string;
+  embeddingDimensions: string;
+  similarityMetric: string;
+  onLlmProviderChange: (value: string) => void;
+  onModelNameChange: (value: string) => void;
+  onEmbeddingModelChange: (value: string) => void;
+  onEmbeddingDimensionsChange: (value: string) => void;
+  onSimilarityMetricChange: (value: string) => void;
+}
+
+const LLMGraphRAG: React.FC<LLMGraphRAGProps> = ({
+  llmProvider,
+  modelName,
+  embeddingModel,
+  embeddingDimensions,
+  similarityMetric,
+  onLlmProviderChange,
+  onModelNameChange,
+  onEmbeddingModelChange,
+  onEmbeddingDimensionsChange,
+  onSimilarityMetricChange
+}) => {
+  const { themeClasses } = useTheme();
+
+  const handleSave = () => {
+    const llmGraphRAGSettings = {
+      llmProvider,
+      modelName,
+      embeddingModel,
+      embeddingDimensions,
+      similarityMetric
+    };
+    
+    console.log("Saving LLM & GraphRAG settings:", llmGraphRAGSettings);
+    alert("LLM & GraphRAG settings saved successfully!");
+    
+    // In a real app, you would save to localStorage, backend, etc.
+    // localStorage.setItem('llmGraphRAGSettings', JSON.stringify(llmGraphRAGSettings));
+  };
+
+  return (
+    <div>
+      <div className="space-y-6">
+        {/* Model settings */}
+        <div className={`p-4 rounded-lg ${themeClasses.bg.card}`}>
+          <h3 className={`text-sm font-semibold mb-4 ${themeClasses.text.secondary}`}>
+            Model settings
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
+                LLM provider
+              </label>
+              <input
+                type="text"
+                value={llmProvider}
+                onChange={(e) => onLlmProviderChange(e.target.value)}
+                className={`w-full px-3 py-2 rounded border outline-none transition-colors ${themeClasses.input}`}
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
+                Model name
+              </label>
+              <input
+                type="text"
+                value={modelName}
+                onChange={(e) => onModelNameChange(e.target.value)}
+                className={`w-full px-3 py-2 rounded border outline-none transition-colors ${themeClasses.input}`}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Embedding settings */}
+        <div className={`p-4 rounded-lg ${themeClasses.bg.card}`}>
+          <h3 className={`text-sm font-semibold mb-4 ${themeClasses.text.secondary}`}>
+            Embedding settings
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
+                Embedding model
+              </label>
+              <input
+                type="text"
+                value={embeddingModel}
+                onChange={(e) => onEmbeddingModelChange(e.target.value)}
+                className={`w-full px-3 py-2 rounded border outline-none transition-colors ${themeClasses.input}`}
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
+                Embedding dimensions
+              </label>
+              <input
+                type="text"
+                value={embeddingDimensions}
+                onChange={(e) => onEmbeddingDimensionsChange(e.target.value)}
+                className={`w-full px-3 py-2 rounded border outline-none transition-colors ${themeClasses.input}`}
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
+                Similarity metric
+              </label>
+              <input
+                type="text"
+                value={similarityMetric}
+                onChange={(e) => onSimilarityMetricChange(e.target.value)}
+                className={`w-full px-3 py-2 rounded border outline-none transition-colors ${themeClasses.input}`}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <div className="flex justify-end mt-6">
+        <button
+          onClick={handleSave}
+          className={`px-6 py-3 rounded font-medium transition-colors flex items-center gap-2 ${themeClasses.button.primary}`}
+        >
+          <Save className="w-4 h-4" />
+          Save
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default LLMGraphRAG;
