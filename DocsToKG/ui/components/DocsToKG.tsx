@@ -8,6 +8,7 @@ import Evaluation from "./Evaluation";
 import Operations from "./Operations";
 import Statistics from "./Statistics";
 import ProjectManagement from "./project_management/ProjectManagement";
+import TopMenuBar from "./TopMenuBar";
 
 export default function DocsToKG() {
   const [activeTab, setActiveTab] = useState("Projects");
@@ -34,7 +35,12 @@ export default function DocsToKG() {
 
   return (
     <ThemeProvider defaultDarkMode={true}>
-      <div className="h-screen w-full flex font-sans">
+      <div className="h-screen w-full flex flex-col font-sans">
+        {/* Top Menu Bar */}
+        <TopMenuBar />
+
+        {/* Main App Layout */}
+        <div className="flex-1 flex">
         <Sidebar 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -52,6 +58,7 @@ export default function DocsToKG() {
           <div className="p-6 min-h-full">
             {renderContent()}
           </div>
+        </div>
         </div>
       </div>
     </ThemeProvider>

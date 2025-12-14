@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { 
   BarChart3,
   TrendingUp,
@@ -49,7 +49,7 @@ const Statistics: React.FC = () => {
           return (
             <div
               key={index}
-              className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.card} border`}
+              className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.default} border`}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-2 rounded-lg ${themeClasses.bg.input}`}>
@@ -83,7 +83,7 @@ const Statistics: React.FC = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Document Processing Chart */}
-        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.card} border`}>
+        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
           <div className="flex items-center justify-between mb-4">
             <h3 className={`text-lg font-semibold ${themeClasses.text.primary}`}>
               Document Processing
@@ -100,7 +100,7 @@ const Statistics: React.FC = () => {
         </div>
 
         {/* Graph Generation Chart */}
-        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.card} border`}>
+        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
           <div className="flex items-center justify-between mb-4">
             <h3 className={`text-lg font-semibold ${themeClasses.text.primary}`}>
               Graph Generation Trends
@@ -118,7 +118,7 @@ const Statistics: React.FC = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className={`rounded-lg ${themeClasses.bg.card} ${themeClasses.border.card} border`}>
+      <div className={`rounded-lg ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
         <div className="p-6 border-b border-gray-700">
           <h3 className={`text-lg font-semibold ${themeClasses.text.primary}`}>
             Recent Activity
@@ -150,7 +150,7 @@ const Statistics: React.FC = () => {
 
       {/* Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.card} border`}>
+        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
           <div className="flex items-center space-x-3 mb-4">
             <Database className="w-5 h-5 text-[#4fb3d9]" />
             <h3 className={`text-lg font-semibold ${themeClasses.text.primary}`}>
@@ -179,7 +179,7 @@ const Statistics: React.FC = () => {
           </div>
         </div>
 
-        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.card} border`}>
+        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
           <div className="flex items-center space-x-3 mb-4">
             <Activity className="w-5 h-5 text-[#4fb3d9]" />
             <h3 className={`text-lg font-semibold ${themeClasses.text.primary}`}>
@@ -202,7 +202,7 @@ const Statistics: React.FC = () => {
           </div>
         </div>
 
-        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.card} border`}>
+        <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
           <div className="flex items-center space-x-3 mb-4">
             <Users className="w-5 h-5 text-[#4fb3d9]" />
             <h3 className={`text-lg font-semibold ${themeClasses.text.primary}`}>
