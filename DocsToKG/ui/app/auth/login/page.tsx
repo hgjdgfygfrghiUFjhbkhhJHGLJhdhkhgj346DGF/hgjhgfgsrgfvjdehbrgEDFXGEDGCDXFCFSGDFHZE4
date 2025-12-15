@@ -66,24 +66,24 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md mx-auto animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+      <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-8">
         {/* Logo and Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
-            <Database className="h-6 w-6 text-blue-600" />
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-900 rounded-full mb-4">
+            <Database className="h-6 w-6 text-blue-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-          <p className="text-gray-600 mt-2">Sign in to your DocsToKG account</p>
+          <h1 className="text-2xl font-bold text-white">Welcome back</h1>
+          <p className="text-gray-400 mt-2">Sign in to your DocsToKG account</p>
         </div>
 
         {/* Error Messages */}
         {errors.length > 0 && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2 text-red-700">
+          <div className="mb-6 p-4 bg-red-900/20 border border-red-800 rounded-lg">
+            <div className="flex items-center gap-2 text-red-400">
               <AlertCircle className="h-5 w-5" />
               <span className="font-medium">Please check the following:</span>
             </div>
-            <ul className="mt-2 ml-7 list-disc text-sm text-red-600">
+            <ul className="mt-2 ml-7 list-disc text-sm text-red-400">
               {errors.map((error, index) => (
                 <li key={index}>{error}</li>
               ))}
@@ -95,7 +95,7 @@ export default function LoginPage() {
         <div className="space-y-4 mb-8">
           <button
             onClick={() => handleSocialLogin("google")}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors text-gray-300"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -122,7 +122,7 @@ export default function LoginPage() {
 
           <button
             onClick={() => handleSocialLogin("microsoft")}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors text-gray-300"
           >
             <svg className="w-5 h-5" viewBox="0 0 23 23">
               <path fill="#f3f3f3" d="M0 0h23v23H0z" />
@@ -140,48 +140,48 @@ export default function LoginPage() {
         {/* Divider */}
         <div className="relative mb-8">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+            <div className="w-full border-t border-gray-600"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            <span className="px-2 bg-gray-800 text-gray-400">Or continue with</span>
           </div>
         </div>
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
               Email address
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
+                <Mail className="h-5 w-5 text-gray-500" />
               </div>
               <input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 placeholder="you@example.com"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
               Password
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
+                <Lock className="h-5 w-5 text-gray-500" />
               </div>
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                className="block w-full pl-10 pr-10 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 placeholder="••••••••"
               />
               <button
@@ -190,16 +190,16 @@ export default function LoginPage() {
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >
                 {showPassword ? (
-                  <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  <EyeOff className="h-5 w-5 text-gray-500 hover:text-gray-400" />
                 ) : (
-                  <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  <Eye className="h-5 w-5 text-gray-500 hover:text-gray-400" />
                 )}
               </button>
             </div>
             <div className="mt-2 text-right">
               <Link
                 href="/auth/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-blue-500 hover:text-blue-400"
               >
                 Forgot your password?
               </Link>
@@ -209,7 +209,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? "Signing in..." : "Sign in"}
           </button>
@@ -217,11 +217,11 @@ export default function LoginPage() {
 
         {/* Sign Up Link */}
         <div className="mt-8 text-center">
-          <p className="text-gray-600">
+          <p className="text-gray-400">
             Don't have an account?{" "}
             <Link
               href="/auth/register"
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-blue-500 hover:text-blue-400 font-medium"
             >
               Sign up
             </Link>
