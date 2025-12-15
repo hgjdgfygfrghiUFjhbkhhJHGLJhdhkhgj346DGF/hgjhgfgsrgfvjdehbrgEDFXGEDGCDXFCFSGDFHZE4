@@ -174,7 +174,6 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
         setProjects(prev => prev.filter(p => p.id !== projectId));
         if (selectedProject?.id === projectId) {
           setSelectedProject(null);
-          setCurrentProjectName("Custom Browser");
           setView("dashboard");
         }
       } else {
@@ -224,7 +223,11 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     const project = projects.find(p => p.id === projectId);
     if (!project) return;
 
-    const updatedProject = { ...project, status: "processing", progress: Math.max(project.progress, 50) };
+    const updatedProject: Project = { 
+      ...project, 
+      status: "processing" as ProjectStatus, 
+      progress: Math.max(project.progress, 50) 
+    };
 
     setProjects(prev => prev.map(p => 
       p.id === projectId ? updatedProject : p

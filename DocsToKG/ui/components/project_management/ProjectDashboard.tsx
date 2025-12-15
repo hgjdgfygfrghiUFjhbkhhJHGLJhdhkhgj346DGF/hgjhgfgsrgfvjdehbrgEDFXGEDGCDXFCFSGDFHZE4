@@ -71,7 +71,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <FolderKanban className="h-6 w-6 text-[#4fb3d9]" />
-            Project Management
+            Projects
           </h1>
           <p className="text-gray-500 mt-1">Manage and monitor your document processing projects</p>
         </div>
