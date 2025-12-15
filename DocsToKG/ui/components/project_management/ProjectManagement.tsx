@@ -30,11 +30,18 @@ export interface ProjectStats {
   error: number;
 }
 
-const ProjectManagement: React.FC = () => {
+interface ProjectManagementProps {
+  activeProjectId: string | null;
+  onProjectActivated: (project: Project) => void;
+}
+
+const ProjectManagement: React.FC<ProjectManagementProps> = ({
+  activeProjectId,
+  onProjectActivated,
+}) => {
   const { themeClasses } = useTheme();
   const [view, setView] = useState<"dashboard" | "list" | "detail" | "new">("dashboard");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [currentProjectName, setCurrentProjectName] = useState("Custom Browser");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -114,7 +121,7 @@ const ProjectManagement: React.FC = () => {
       
       setProjects(prev => [newProject, ...prev]);
       setSelectedProject(newProject);
-      setCurrentProjectName(newProject.name);
+      onProjectActivated(newProject);
       setView("detail");
       
       console.log("Project created with data:", projectData);
@@ -144,7 +151,7 @@ const ProjectManagement: React.FC = () => {
           p.id === updatedProject.id ? updatedProject : p
         ));
         setSelectedProject(updatedProject);
-        setCurrentProjectName(updatedProject.name);
+        onProjectActivated(updatedProject);
       } else {
         alert("Failed to update project");
       }
@@ -214,10 +221,18 @@ const ProjectManagement: React.FC = () => {
   };
 
   const handleResumeProject = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    const updatedProject = { ...project, status: "processing", progress: Math.max(project.progress, 50) };
+
     setProjects(prev => prev.map(p => 
-      p.id === projectId ? { ...p, status: "processing", progress: 50 } : p
+      p.id === projectId ? updatedProject : p
     ));
-    alert("Project processing resumed");
+    setSelectedProject(updatedProject);
+    onProjectActivated(updatedProject);
+    setView("detail");
+    alert("Project resumed and set as active.");
   };
 
   return (
@@ -234,11 +249,12 @@ const ProjectManagement: React.FC = () => {
           {view === "dashboard" && (
         <ProjectDashboard
           projects={projects}
+              activeProjectId={activeProjectId}
           onViewAll={() => setView("list")}
           onNewProject={() => setView("new")}
           onSelectProject={(project) => {
             setSelectedProject(project);
-            setCurrentProjectName(project.name);
+                onProjectActivated(project);
             setView("detail");
           }}
           onStarProject={handleStarProject}
@@ -252,13 +268,14 @@ const ProjectManagement: React.FC = () => {
           onNewProject={() => setView("new")}
           onSelectProject={(project) => {
             setSelectedProject(project);
-            setCurrentProjectName(project.name);
+            onProjectActivated(project);
             setView("detail");
           }}
           onStarProject={handleStarProject}
           onDeleteProject={handleDeleteProject}
           onExportProject={handleExportProject}
           onResumeProject={handleResumeProject}
+          activeProjectId={activeProjectId}
         />
       )}
 
@@ -275,7 +292,6 @@ const ProjectManagement: React.FC = () => {
           project={selectedProject}
           onBack={() => {
             setView("dashboard");
-            setCurrentProjectName("Custom Browser");
           }}
           onUpdateProject={handleUpdateProject}
           onDeleteProject={handleDeleteProject}

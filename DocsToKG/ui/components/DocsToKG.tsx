@@ -9,10 +9,15 @@ import Operations from "./Operations";
 import Statistics from "./Statistics";
 import ProjectManagement from "./project_management/ProjectManagement";
 import TopMenuBar from "./TopMenuBar";
+import type { Project } from "./project_management/ProjectManagement";
 
 export default function DocsToKG() {
   const [activeTab, setActiveTab] = useState("Projects");
-  const [currentProjectName, setCurrentProjectName] = useState("Custom Browser");
+  const [activeProject, setActiveProject] = useState<Pick<Project, "id" | "name"> | null>(null);
+
+  const handleProjectActivated = (project: Project) => {
+    setActiveProject({ id: project.id, name: project.name });
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -27,9 +32,19 @@ export default function DocsToKG() {
       case "Operations":
         return <Operations />;
       case "Projects":
-        return <ProjectManagement />;
+        return (
+          <ProjectManagement
+            activeProjectId={activeProject?.id || null}
+            onProjectActivated={handleProjectActivated}
+          />
+        );
       default:
-        return <ProjectManagement />;
+        return (
+          <ProjectManagement
+            activeProjectId={activeProject?.id || null}
+            onProjectActivated={handleProjectActivated}
+          />
+        );
     }
   };
 
@@ -44,7 +59,7 @@ export default function DocsToKG() {
         <Sidebar 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          currentProjectName={currentProjectName}
+          currentProjectName={activeProject?.name || "Custom Browser"}
         />
         
         {/* Main Content */}

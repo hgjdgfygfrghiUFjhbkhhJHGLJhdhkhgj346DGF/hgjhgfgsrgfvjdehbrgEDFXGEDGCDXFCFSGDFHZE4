@@ -24,6 +24,7 @@ interface ProjectListProps {
   onDeleteProject: (projectId: string) => void;
   onExportProject: (projectId: string, format: "csv" | "sql") => void;
   onResumeProject: (projectId: string) => void;
+  activeProjectId: string | null;
 }
 
 const ProjectList: React.FC<ProjectListProps> = ({
@@ -34,7 +35,8 @@ const ProjectList: React.FC<ProjectListProps> = ({
   onStarProject,
   onDeleteProject,
   onExportProject,
-  onResumeProject
+  onResumeProject,
+  activeProjectId
 }) => {
   const { themeClasses } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
@@ -256,6 +258,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
             <ProjectCard
               key={project.id}
               project={project}
+              isActive={activeProjectId === project.id}
               onSelect={() => onSelectProject(project)}
               onStar={() => onStarProject(project.id)}
             />
@@ -272,6 +275,11 @@ const ProjectList: React.FC<ProjectListProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${
+                        activeProjectId === project.id ? "bg-green-500" : "bg-red-400"
+                      }`}
+                    ></span>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

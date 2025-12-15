@@ -16,6 +16,7 @@ import ProjectCard from "./ProjectCard";
 
 interface ProjectDashboardProps {
   projects: Project[];
+  activeProjectId: string | null;
   onViewAll: () => void;
   onNewProject: () => void;
   onSelectProject: (project: Project) => void;
@@ -24,6 +25,7 @@ interface ProjectDashboardProps {
 
 const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
   projects,
+  activeProjectId,
   onViewAll,
   onNewProject,
   onSelectProject,
@@ -154,6 +156,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
             <ProjectCard
               key={project.id}
               project={project}
+              isActive={activeProjectId === project.id}
               onSelect={() => onSelectProject(project)}
               onStar={() => onStarProject(project.id)}
               compact={true}
@@ -177,6 +180,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
               <ProjectCard
                 key={project.id}
                 project={project}
+                isActive={activeProjectId === project.id}
                 onSelect={() => onSelectProject(project)}
                 onStar={() => onStarProject(project.id)}
                 compact={true}

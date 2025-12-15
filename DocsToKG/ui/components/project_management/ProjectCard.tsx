@@ -16,13 +16,15 @@ interface ProjectCardProps {
   onSelect: () => void;
   onStar: () => void;
   compact?: boolean;
+  isActive?: boolean;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   onSelect,
   onStar,
-  compact = false
+  compact = false,
+  isActive = false
 }) => {
   const { themeClasses } = useTheme();
 
@@ -70,6 +72,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
+            <span
+              className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${
+                isActive ? "bg-green-500" : "bg-red-400"
+              }`}
+              aria-label={isActive ? "Active project" : "Inactive project"}
+            ></span>
             <h3 className="font-semibold truncate">{project.name}</h3>
             <button
               onClick={(e) => {
