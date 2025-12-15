@@ -4,10 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Database } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refresh } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -44,6 +46,9 @@ export default function LoginPage() {
         setErrors([data.message || "Invalid email or password"]);
         return;
       }
+
+      // Pull fresh user state so the UI (TopMenuBar) updates immediately
+      await refresh();
 
       const redirect = searchParams.get("redirect") || "/DocsToKG";
       router.push(redirect);

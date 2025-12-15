@@ -16,6 +16,7 @@ import {
   Check,
   X
 } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 
 interface FormData {
   firstName: string;
@@ -38,6 +39,7 @@ interface PasswordValidation {
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refresh } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -132,6 +134,9 @@ export default function RegisterPage() {
         setErrors([data.message || "Registration failed. Please try again."]);
         return;
       }
+
+      // Refresh auth state so TopMenuBar shows the user immediately
+      await refresh();
 
       const redirect = searchParams.get("redirect") || "/DocsToKG";
       router.push(redirect);

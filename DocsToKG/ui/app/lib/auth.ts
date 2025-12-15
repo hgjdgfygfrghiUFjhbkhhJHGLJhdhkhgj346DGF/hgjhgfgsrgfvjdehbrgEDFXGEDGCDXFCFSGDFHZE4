@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import type { RowDataPacket } from "mysql2";
 import { getConnection } from "./db";
 
 const JWT_SECRET = process.env.AUTH_SECRET;
@@ -40,6 +41,13 @@ export function verifyToken(token: string): AuthTokenPayload | null {
   }
 }
 
+type UserRow = RowDataPacket & {
+  user_id: number;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+};
+
 export async function getUserFromToken(): Promise<AuthTokenPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(TOKEN_COOKIE)?.value;
@@ -49,17 +57,17 @@ export async function getUserFromToken(): Promise<AuthTokenPayload | null> {
 
   // Fetch full user data including names
   const pool = await getConnection();
-  const [rows] = await pool.query(
+  const [rows] = await pool.query<UserRow[]>(
     "SELECT user_id, email, first_name, last_name FROM User WHERE user_id = ?",
     [payload.user_id]
   );
-  const user = Array.isArray(rows) ? rows[0] : null;
+  const user = rows[0];
   if (!user) return null;
   return {
     user_id: user.user_id,
     email: user.email,
-    first_name: user.first_name,
-    last_name: user.last_name,
+    first_name: user.first_name || undefined,
+    last_name: user.last_name || undefined,
   };
 }
 
