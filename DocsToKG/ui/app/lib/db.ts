@@ -67,7 +67,8 @@ export async function ensureSchema(): Promise<void> {
       user_id BIGINT NOT NULL,
       description TEXT,
       is_favorite BOOLEAN DEFAULT FALSE,
-      status ENUM('completed','uploading','processing','error') DEFAULT 'uploading',
+      is_active BOOLEAN DEFAULT FALSE,
+      status ENUM('uploading','processing','analyzing','error') DEFAULT 'uploading',
       tags TEXT,
       percentage INT DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -131,6 +132,15 @@ export async function ensureSchema(): Promise<void> {
 
   for (const stmt of statements) {
     await pool.query(stmt);
+  }
+
+  // Ensure is_active exists on older databases (ignore if already present)
+  try {
+    await pool.query(`ALTER TABLE Project ADD COLUMN is_active BOOLEAN DEFAULT FALSE AFTER is_favorite`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
   }
 
   schemaInitialized = true;

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ThemeProvider } from "./themes";
 import Sidebar from "./Sidebar";
 import Settings from "./Settings";
@@ -14,9 +14,45 @@ import type { Project } from "./project_management/ProjectManagement";
 export default function DocsToKG() {
   const [activeTab, setActiveTab] = useState("Projects");
   const [activeProject, setActiveProject] = useState<Pick<Project, "id" | "name"> | null>(null);
+  const [loadingActiveProject, setLoadingActiveProject] = useState(true);
 
-  const handleProjectActivated = (project: Project) => {
+  // Load active project on mount
+  useEffect(() => {
+    loadActiveProject();
+  }, []);
+
+  const loadActiveProject = async () => {
+    try {
+      const res = await fetch("/api/projects/active");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.activeProject) {
+          setActiveProject({
+            id: `${data.activeProject.project_name}-${data.activeProject.user_id}`,
+            name: data.activeProject.project_name
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error loading active project:", err);
+    } finally {
+      setLoadingActiveProject(false);
+    }
+  };
+
+  const handleProjectActivated = async (project: Project) => {
     setActiveProject({ id: project.id, name: project.name });
+    
+    // Persist active project to backend
+    try {
+      await fetch("/api/projects/active", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectName: project.name })
+      });
+    } catch (err) {
+      console.error("Error saving active project:", err);
+    }
   };
 
   const renderContent = () => {
@@ -47,6 +83,19 @@ export default function DocsToKG() {
         );
     }
   };
+
+  if (loadingActiveProject) {
+    return (
+      <ThemeProvider defaultDarkMode={true}>
+        <div className="h-screen w-full flex flex-col font-sans items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading...</p>
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider defaultDarkMode={true}>

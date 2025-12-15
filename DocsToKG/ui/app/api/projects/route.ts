@@ -20,6 +20,7 @@ export async function GET() {
         status, 
         tags, 
         percentage, 
+        is_active,
         created_at, 
         updated_at
       FROM Project 
@@ -65,9 +66,9 @@ export async function POST(request: Request) {
 
     // Insert new project
     await pool.query(
-      `INSERT INTO Project (project_name, user_id, description, is_favorite, status, tags, percentage)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name, user.user_id, description || null, false, "processing", tags || null, 0]
+      `INSERT INTO Project (project_name, user_id, description, is_favorite, is_active, status, tags, percentage)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, user.user_id, description || null, false, false, "processing", tags || null, 0]
     );
 
     // Fetch the created project
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
         status, 
         tags, 
         percentage, 
+        is_active,
         created_at, 
         updated_at
       FROM Project 
