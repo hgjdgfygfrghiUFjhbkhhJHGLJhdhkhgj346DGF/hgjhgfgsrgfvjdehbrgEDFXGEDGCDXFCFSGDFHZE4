@@ -1,12 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "../themes";
 import ProjectDashboard from "./ProjectDashboard";
 import ProjectList from "./ProjectList";
 import NewProjectWizard from "./NewProjectWizard";
 import ProjectDetail from "./ProjectDetail";
 
-export type ProjectStatus = "draft" | "processing" | "analyzing" | "completed" | "error";
+export type ProjectStatus = "draft" | "processing" | "analyzing" | "completed" | "error" | "uploading";
 
 export interface Project {
   id: string;
@@ -35,122 +35,173 @@ const ProjectManagement: React.FC = () => {
   const [view, setView] = useState<"dashboard" | "list" | "detail" | "new">("dashboard");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [currentProjectName, setCurrentProjectName] = useState("Custom Browser");
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: "1",
-      name: "Medical Research Papers",
-      description: "Analysis of medical research papers on cardiovascular diseases",
-      createdAt: new Date("2024-01-15"),
-      updatedAt: new Date("2024-01-20"),
-      status: "completed",
-      progress: 100,
-      documentCount: 24,
-      graphCount: 5,
-      isStarred: true,
-      folder: "Medical",
-      tags: ["research", "medical", "health"]
-    },
-    {
-      id: "2",
-      name: "Legal Documents Analysis",
-      description: "Contract analysis and entity extraction from legal documents",
-      createdAt: new Date("2024-01-18"),
-      updatedAt: new Date("2024-01-19"),
-      status: "analyzing",
-      progress: 75,
-      documentCount: 12,
-      graphCount: 3,
-      isStarred: false,
-      folder: "Legal",
-      tags: ["legal", "contracts", "entities"]
-    },
-    {
-      id: "3",
-      name: "Academic Papers Corpus",
-      description: "Large corpus of academic papers for knowledge graph creation",
-      createdAt: new Date("2024-01-10"),
-      updatedAt: new Date("2024-01-12"),
-      status: "processing",
-      progress: 40,
-      documentCount: 150,
-      graphCount: 0,
-      isStarred: true,
-      folder: "Academic",
-      tags: ["academic", "papers", "research"]
-    },
-    {
-      id: "4",
-      name: "Technical Documentation",
-      description: "Software documentation analysis for API reference",
-      createdAt: new Date("2024-01-05"),
-      updatedAt: new Date("2024-01-06"),
-      status: "error",
-      progress: 30,
-      documentCount: 8,
-      graphCount: 0,
-      isStarred: false,
-      tags: ["technical", "docs", "api"]
-    }
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleCreateProject = (projectData: { 
+  // Fetch projects from API
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/projects");
+      if (res.ok) {
+        const data = await res.json();
+        const mappedProjects: Project[] = data.projects.map((p: any) => ({
+          id: `${p.project_name}-${p.user_id}`,
+          name: p.project_name,
+          description: p.description || "",
+          createdAt: new Date(p.created_at),
+          updatedAt: new Date(p.updated_at),
+          status: p.status as ProjectStatus,
+          progress: p.percentage || 0,
+          documentCount: 0, // Will be populated from Document table later
+          graphCount: 0,
+          isStarred: p.is_favorite || false,
+          tags: p.tags ? p.tags.split(",") : []
+        }));
+        setProjects(mappedProjects);
+      }
+    } catch (err) {
+      console.error("Failed to fetch projects:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateProject = async (projectData: { 
     name: string; 
     description: string;
+    tags: string[];
     initializationType: "files" | "folder" | "existing";
     selectedFiles?: File[];
     selectedFolder?: FileList | null;
     selectedProjects?: string[];
   }) => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      name: projectData.name,
-      description: projectData.description,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: "draft",
-      progress: 0,
-      documentCount: projectData.initializationType === "files" 
-        ? (projectData.selectedFiles?.length || 0)
-        : projectData.initializationType === "folder"
-        ? (projectData.selectedFolder?.length || 0)
-        : projectData.selectedProjects?.length || 0,
-      graphCount: 0,
-      isStarred: false,
-      tags: []
-    };
-    
-    setProjects(prev => [newProject, ...prev]);
-    setSelectedProject(newProject);
-    setCurrentProjectName(newProject.name);
-    setView("detail");
-    
-    console.log("Project created with data:", projectData);
-    alert(`Project "${newProject.name}" created successfully!`);
-  };
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: projectData.name,
+          description: projectData.description,
+          tags: projectData.tags.join(",")
+        })
+      });
 
-  const handleUpdateProject = (updatedProject: Project) => {
-    setProjects(prev => prev.map(p => 
-      p.id === updatedProject.id ? updatedProject : p
-    ));
-    setSelectedProject(updatedProject);
-    setCurrentProjectName(updatedProject.name);
-  };
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.message || "Failed to create project");
+        return;
+      }
 
-  const handleDeleteProject = (projectId: string) => {
-    setProjects(prev => prev.filter(p => p.id !== projectId));
-    if (selectedProject?.id === projectId) {
-      setSelectedProject(null);
-      setCurrentProjectName("Custom Browser");
-      setView("dashboard");
+      const data = await res.json();
+      const newProject: Project = {
+        id: `${data.project.project_name}-${data.project.user_id}`,
+        name: data.project.project_name,
+        description: data.project.description || "",
+        createdAt: new Date(data.project.created_at),
+        updatedAt: new Date(data.project.updated_at),
+        status: data.project.status as ProjectStatus,
+        progress: data.project.percentage || 0,
+        documentCount: 0,
+        graphCount: 0,
+        isStarred: data.project.is_favorite || false,
+        tags: data.project.tags ? data.project.tags.split(",") : []
+      };
+      
+      setProjects(prev => [newProject, ...prev]);
+      setSelectedProject(newProject);
+      setCurrentProjectName(newProject.name);
+      setView("detail");
+      
+      console.log("Project created with data:", projectData);
+      alert(`Project "${newProject.name}" created successfully!`);
+    } catch (err) {
+      console.error("Error creating project:", err);
+      alert("Failed to create project");
     }
   };
 
-  const handleStarProject = (projectId: string) => {
-    setProjects(prev => prev.map(p => 
-      p.id === projectId ? { ...p, isStarred: !p.isStarred } : p
-    ));
-    if (selectedProject?.id === projectId) {
-      setSelectedProject(prev => prev ? { ...prev, isStarred: !prev.isStarred } : null);
+  const handleUpdateProject = async (updatedProject: Project) => {
+    try {
+      const res = await fetch(`/api/projects/${encodeURIComponent(updatedProject.name)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: updatedProject.description,
+          is_favorite: updatedProject.isStarred,
+          status: updatedProject.status,
+          percentage: updatedProject.progress,
+          tags: updatedProject.tags.join(",")
+        })
+      });
+
+      if (res.ok) {
+        setProjects(prev => prev.map(p => 
+          p.id === updatedProject.id ? updatedProject : p
+        ));
+        setSelectedProject(updatedProject);
+        setCurrentProjectName(updatedProject.name);
+      } else {
+        alert("Failed to update project");
+      }
+    } catch (err) {
+      console.error("Error updating project:", err);
+      alert("Failed to update project");
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    try {
+      const res = await fetch(`/api/projects/${encodeURIComponent(project.name)}`, {
+        method: "DELETE"
+      });
+
+      if (res.ok) {
+        setProjects(prev => prev.filter(p => p.id !== projectId));
+        if (selectedProject?.id === projectId) {
+          setSelectedProject(null);
+          setCurrentProjectName("Custom Browser");
+          setView("dashboard");
+        }
+      } else {
+        alert("Failed to delete project");
+      }
+    } catch (err) {
+      console.error("Error deleting project:", err);
+      alert("Failed to delete project");
+    }
+  };
+
+  const handleStarProject = async (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    try {
+      const res = await fetch(`/api/projects/${encodeURIComponent(project.name)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          is_favorite: !project.isStarred
+        })
+      });
+
+      if (res.ok) {
+        setProjects(prev => prev.map(p => 
+          p.id === projectId ? { ...p, isStarred: !p.isStarred } : p
+        ));
+        if (selectedProject?.id === projectId) {
+          setSelectedProject(prev => prev ? { ...prev, isStarred: !prev.isStarred } : null);
+        }
+      }
+    } catch (err) {
+      console.error("Error starring project:", err);
     }
   };
 
@@ -171,7 +222,16 @@ const ProjectManagement: React.FC = () => {
 
   return (
     <div className={`rounded-lg p-6 ${themeClasses.card}`}>
-      {view === "dashboard" && (
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className={themeClasses.text.secondary}>Loading projects...</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {view === "dashboard" && (
         <ProjectDashboard
           projects={projects}
           onViewAll={() => setView("list")}
@@ -223,6 +283,8 @@ const ProjectManagement: React.FC = () => {
           onResumeProject={handleResumeProject}
           onStarProject={handleStarProject}
         />
+      )}
+        </>
       )}
     </div>
   );

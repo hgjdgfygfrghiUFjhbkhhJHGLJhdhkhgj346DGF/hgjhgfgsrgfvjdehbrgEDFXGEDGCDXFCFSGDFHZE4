@@ -19,6 +19,7 @@ interface NewProjectWizardProps {
   onCreateProject: (projectData: { 
     name: string; 
     description: string;
+    tags: string[];
     initializationType: "files" | "folder" | "existing";
     selectedFiles?: File[];
     selectedFolder?: FileList | null;
@@ -37,11 +38,13 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({
   const [projectData, setProjectData] = useState({
     name: "",
     description: "",
+    tags: [] as string[],
     initializationType: "files" as "files" | "folder" | "existing",
     selectedFiles: [] as File[],
     selectedFolder: null as FileList | null,
     selectedProjects: [] as string[],
   });
+  const [currentTag, setCurrentTag] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +84,31 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({
           : [...prev.selectedProjects, projectId]
       };
     });
+  };
+
+  const handleAddTag = () => {
+    const trimmedTag = currentTag.trim();
+    if (trimmedTag && !projectData.tags.includes(trimmedTag)) {
+      setProjectData(prev => ({
+        ...prev,
+        tags: [...prev.tags, trimmedTag]
+      }));
+      setCurrentTag("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setProjectData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+
+  const handleTagKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag();
+    }
   };
 
   const StepIcon = steps[step - 1].icon;
@@ -182,6 +210,48 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({
                 rows={4}
                 className={`w-full px-3 py-2 rounded-lg ${themeClasses.input}`}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Tags
+              </label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={currentTag}
+                  onChange={(e) => setCurrentTag(e.target.value)}
+                  onKeyPress={handleTagKeyPress}
+                  placeholder="Add a tag..."
+                  className={`flex-1 px-3 py-2 rounded-lg ${themeClasses.input}`}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  className={`px-4 py-2 rounded-lg ${themeClasses.button.primary}`}
+                >
+                  Add
+                </button>
+              </div>
+              {projectData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {projectData.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${themeClasses.bg.active} ${themeClasses.text.primary}`}
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="ml-1 hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
