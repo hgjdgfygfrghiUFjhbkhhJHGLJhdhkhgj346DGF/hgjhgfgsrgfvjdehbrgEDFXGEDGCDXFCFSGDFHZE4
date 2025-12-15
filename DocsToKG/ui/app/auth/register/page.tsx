@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Mail, 
   Lock, 
@@ -37,6 +37,7 @@ interface PasswordValidation {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -113,15 +114,27 @@ export default function RegisterPage() {
     }
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For demo purposes, just redirect to dashboard
-      // In a real app, you would:
-      // 1. Call your registration API
-      // 2. Store the token
-      // 3. Redirect to dashboard
-      router.push("/dashboard");
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          dateOfBirth: formData.dateOfBirth,
+          address: formData.address,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setErrors([data.message || "Registration failed. Please try again."]);
+        return;
+      }
+
+      const redirect = searchParams.get("redirect") || "/DocsToKG";
+      router.push(redirect);
     } catch (error) {
       setErrors(["Registration failed. Please try again."]);
     } finally {
@@ -130,9 +143,8 @@ export default function RegisterPage() {
   };
 
   const handleSocialRegister = (provider: "google" | "microsoft") => {
+    // Placeholder for future OAuth integration
     console.log(`Registering with ${provider}`);
-    // In a real app, you would redirect to OAuth endpoint
-    router.push("/dashboard"); // Temporary redirect for demo
   };
 
   return (

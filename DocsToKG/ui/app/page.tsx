@@ -112,10 +112,25 @@
 //   );
 // }
 
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Database, FileText, Brain, Shield } from "lucide-react";
+import { useAuth } from "../components/AuthProvider";
 
 export default function HomePage() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
+
+  const handleDemoClick = () => {
+    if (user) {
+      router.push("/DocsToKG");
+    } else {
+      router.push("/auth/login?redirect=/DocsToKG");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Navigation */}
@@ -127,18 +142,28 @@ export default function HomePage() {
               <span className="text-2xl font-bold text-gray-900">DocsToKG</span>
             </div>
             <div className="flex items-center space-x-4">
-              <Link
-                href="/auth/login"
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/DocsToKG"  // Changed from /auth/register to /DocsToKG
+              {user ? (
+                <Link
+                  href="/DocsToKG"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Go to app
+                </Link>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Sign in / Register
+                </Link>
+              )}
+              <button
+                onClick={handleDemoClick}
                 className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={loading}
               >
                 Try Demo
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -158,18 +183,19 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
               <Link
-                href="/auth/register"
+                href={user ? "/DocsToKG" : "/auth/register"}
                 className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
               >
-                Start Free Trial
+                {user ? "Enter App" : "Start Free Trial"}
                 <ArrowRight className="h-5 w-5" />
               </Link>
-              <Link
-                href="/DocsToKG"  // This is already correct
+              <button
+                onClick={handleDemoClick}
                 className="px-8 py-3 bg-white text-gray-900 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                disabled={loading}
               >
                 Try Demo
-              </Link>
+              </button>
             </div>
           </div>
 

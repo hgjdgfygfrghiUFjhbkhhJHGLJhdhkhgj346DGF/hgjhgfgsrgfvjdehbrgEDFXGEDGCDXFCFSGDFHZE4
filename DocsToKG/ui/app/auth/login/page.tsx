@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Database } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -32,15 +33,20 @@ export default function LoginPage() {
     }
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, just redirect to dashboard
-      // In a real app, you would:
-      // 1. Call your authentication API
-      // 2. Store the token
-      // 3. Redirect to dashboard
-      router.push("/dashboard");
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setErrors([data.message || "Invalid email or password"]);
+        return;
+      }
+
+      const redirect = searchParams.get("redirect") || "/DocsToKG";
+      router.push(redirect);
     } catch (error) {
       setErrors(["Invalid email or password"]);
     } finally {
@@ -49,9 +55,8 @@ export default function LoginPage() {
   };
 
   const handleSocialLogin = (provider: "google" | "microsoft") => {
+    // Placeholder for future OAuth integration
     console.log(`Logging in with ${provider}`);
-    // In a real app, you would redirect to OAuth endpoint
-    router.push("/dashboard"); // Temporary redirect for demo
   };
 
   return (

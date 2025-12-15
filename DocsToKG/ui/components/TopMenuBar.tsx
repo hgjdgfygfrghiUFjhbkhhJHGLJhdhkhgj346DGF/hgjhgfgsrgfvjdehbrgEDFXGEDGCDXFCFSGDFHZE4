@@ -17,20 +17,26 @@ import {
   ChevronDown
 } from "lucide-react";
 import { useTheme } from "./themes";
+import { useAuth } from "./AuthProvider";
 
 const TopMenuBar = () => {
   const { darkMode, themeClasses, toggleDarkMode } = useTheme();
+  const { user: authUser, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showHelpMenu, setShowHelpMenu] = useState(false);
   
-  // Mock user data
+  // Derive user display data from auth
   const user = {
-    name: "John Doe",
-    email: "john@example.com",
-    avatar: "JD",
-    plan: "Pro Plan",
-    role: "Admin"
+    name: authUser ? `${authUser.first_name || ''} ${authUser.last_name || ''}`.trim() || authUser.email : "Guest",
+    email: authUser?.email || "",
+    avatar: authUser ? `${authUser.first_name?.[0] || ''}${authUser.last_name?.[0] || ''}`.toUpperCase() || authUser.email[0].toUpperCase() : "G",
+    plan: "Free Plan",
+    role: "User"
+  };
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   // Mock notifications
@@ -237,7 +243,7 @@ const TopMenuBar = () => {
                     Billing & Plan
                   </a>
                   <div className={`border-t my-2 ${themeClasses.border.default}`}></div>
-                  <button className={`flex items-center w-full px-4 py-2 text-sm hover:${themeClasses.bg.hover} ${themeClasses.text.danger}`}>
+                  <button onClick={handleLogout} className={`flex items-center w-full px-4 py-2 text-sm hover:${themeClasses.bg.hover} ${themeClasses.text.danger}`}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign Out
                   </button>
