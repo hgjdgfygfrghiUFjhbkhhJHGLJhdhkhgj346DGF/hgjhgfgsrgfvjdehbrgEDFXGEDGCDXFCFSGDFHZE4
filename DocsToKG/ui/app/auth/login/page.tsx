@@ -237,18 +237,22 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Sign Up Link */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-400">
-            Don't have an account?{" "}
-            <Link
-              href="/auth/register"
-              className="text-blue-500 hover:text-blue-400 font-medium"
-            >
-              Sign up
-            </Link>
-          </p>
-        </div>
+        {/* Sign Up Link (only for 'user' role) */}
+        {role === 'user' && (
+          <div
+            className="mt-8 text-center transition-all duration-200 ease-out"
+          >
+            <p className="text-gray-400">
+              Don't have an account?{" "}
+              <Link
+                href="/auth/register"
+                className="text-blue-500 hover:text-blue-400 font-medium"
+              >
+                Sign up
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
