@@ -1,4 +1,5 @@
 import mysql, { Pool } from "mysql2/promise";
+import bcrypt from "bcryptjs";
 
 const {
   DB_HOST = "localhost",
@@ -59,6 +60,8 @@ export async function ensureSchema(): Promise<void> {
       email VARCHAR(320) UNIQUE,
       address VARCHAR(512),
       role ENUM('admin','member','user') DEFAULT 'user',
+      is_connected TINYINT(1) DEFAULT 0,
+      is_blocked BOOLEAN DEFAULT FALSE,
       password VARCHAR(255),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -128,6 +131,14 @@ export async function ensureSchema(): Promise<void> {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (project_name, user_id),
       CONSTRAINT fk_setting_project FOREIGN KEY (project_name, user_id) REFERENCES Project(project_name, user_id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+    `CREATE TABLE IF NOT EXISTS UsersHistory (
+      history_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      user_id BIGINT NOT NULL,
+      event ENUM('login','logout') NOT NULL,
+      event_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_history_user (user_id),
+      CONSTRAINT fk_history_user FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
   ];
 
@@ -151,6 +162,42 @@ export async function ensureSchema(): Promise<void> {
     if (err?.code !== "ER_DUP_FIELDNAME") {
       throw err;
     }
+  }
+
+  // Ensure is_connected exists on older databases (ignore if already present)
+  try {
+    await pool.query(`ALTER TABLE User ADD COLUMN is_connected TINYINT(1) DEFAULT 0 AFTER role`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
+
+  // Ensure is_blocked exists on older databases (ignore if already present)
+  try {
+    await pool.query(`ALTER TABLE User ADD COLUMN is_blocked BOOLEAN DEFAULT FALSE AFTER is_connected`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
+
+  // Seed a unique admin account if it does not already exist
+  try {
+    const [rows] = await pool.query<mysql.RowDataPacket[]>(
+      "SELECT user_id FROM User WHERE email = ?",
+      ["admin@admin.com"]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) {
+      const hash = await bcrypt.hash("Admin0000?*", 10);
+      await pool.query(
+        `INSERT INTO User (email, password, role, is_connected, is_blocked, first_name, last_name, birth_date, address)
+         VALUES (?, ?, 'admin', 0, 0, NULL, NULL, NULL, NULL)`,
+        ["admin@admin.com", hash]
+      );
+    }
+  } catch (err) {
+    console.error("Admin seeding failed", err);
   }
 
   schemaInitialized = true;

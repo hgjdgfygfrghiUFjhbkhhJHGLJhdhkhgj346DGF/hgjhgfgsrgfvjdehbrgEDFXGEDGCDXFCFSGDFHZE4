@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     await ensureSchema();
     const pool = await getConnection();
     const [rows] = await pool.query(
-      "SELECT user_id, email, password, first_name, last_name, role FROM User WHERE email = ?",
+      "SELECT user_id, email, password, first_name, last_name, role, is_blocked FROM User WHERE email = ?",
       [email]
     );
 
@@ -32,7 +32,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Role mismatch for this account" }, { status: 403 });
     }
 
-    const token = createToken({ user_id: user.user_id, email: user.email });
+    // Blocked user check
+    if (user.is_blocked) {
+      return NextResponse.json({
+        message: "You are blocked by the administrator, please contact them to reactivate your account."
+      }, { status: 403 });
+    }
+
+    // Mark user as connected and record login history
+    try {
+      await pool.query("UPDATE User SET is_connected = 1 WHERE user_id = ?", [user.user_id]);
+      await pool.query("INSERT INTO UsersHistory (user_id, event) VALUES (?, 'login')", [user.user_id]);
+    } catch (err) {
+      console.error("Failed to update connection state or history", err);
+    }
+
+    const token = createToken({ user_id: user.user_id, email: user.email, role: user.role });
     const response = NextResponse.json({
       user_id: user.user_id,
       email: user.email,

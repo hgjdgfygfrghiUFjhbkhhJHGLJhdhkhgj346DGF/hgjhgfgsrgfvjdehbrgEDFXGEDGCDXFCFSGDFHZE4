@@ -15,16 +15,18 @@ interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   currentProjectName?: string;
+  tabs?: { name: string; icon: React.ComponentType<any> }[];
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   activeTab, 
   setActiveTab,
-  currentProjectName = "Custom Browser"
+  currentProjectName = "Custom Browser",
+  tabs: customTabs
 }) => {
   const { darkMode, themeClasses, toggleDarkMode } = useTheme();
 
-  const tabs = [
+  const tabs = customTabs ?? [
     { name: "Projects", icon: FolderKanban },
     { name: "Build graph", icon: GitBranch },
     { name: "Statistics", icon: TrendingUp },
