@@ -30,8 +30,8 @@ export async function POST(request: Request) {
     const hashed = await hashPassword(password);
 
     const [result]: any = await pool.query(
-      `INSERT INTO User (first_name, last_name, birth_date, email, address, password)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO User (first_name, last_name, birth_date, email, address, role, password)
+       VALUES (?, ?, ?, ?, ?, 'user', ?)`,
       [firstName, lastName, dateOfBirth || null, email, address || null, hashed]
     );
 
@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       email,
       first_name: firstName,
       last_name: lastName,
+      role: 'user',
     });
 
     setAuthCookie(response, token);

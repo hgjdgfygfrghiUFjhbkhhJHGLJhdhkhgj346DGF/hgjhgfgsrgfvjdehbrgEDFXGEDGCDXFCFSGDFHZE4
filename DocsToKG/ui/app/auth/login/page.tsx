@@ -16,6 +16,7 @@ export default function LoginPage() {
     password: "",
   });
   const [errors, setErrors] = useState<string[]>([]);
+  const [role, setRole] = useState<'admin' | 'member' | 'user'>('user');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +39,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, password: formData.password }),
+        body: JSON.stringify({ email: formData.email, password: formData.password, role }),
       });
 
       if (!res.ok) {
@@ -135,6 +136,27 @@ export default function LoginPage() {
               Continue with Microsoft
             </span>
           </button>
+        </div>
+
+        {/* Role Selection (Login Only) */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-300 mb-2">Select your role</label>
+          <div className="grid grid-cols-3 gap-2">
+            {(["admin","member","user"] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
+                  role === r
+                    ? 'border-blue-500 bg-blue-600 text-white'
+                    : 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Divider */}

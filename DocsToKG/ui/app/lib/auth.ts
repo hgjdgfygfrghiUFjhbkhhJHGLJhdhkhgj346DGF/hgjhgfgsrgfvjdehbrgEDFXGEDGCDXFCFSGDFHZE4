@@ -18,6 +18,7 @@ export interface AuthTokenPayload {
   email: string;
   first_name?: string;
   last_name?: string;
+  role?: 'admin' | 'member' | 'user';
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -46,6 +47,7 @@ type UserRow = RowDataPacket & {
   email: string;
   first_name: string | null;
   last_name: string | null;
+  role: 'admin' | 'member' | 'user';
 };
 
 export async function getUserFromToken(): Promise<AuthTokenPayload | null> {
@@ -58,7 +60,7 @@ export async function getUserFromToken(): Promise<AuthTokenPayload | null> {
   // Fetch full user data including names
   const pool = await getConnection();
   const [rows] = await pool.query<UserRow[]>(
-    "SELECT user_id, email, first_name, last_name FROM User WHERE user_id = ?",
+    "SELECT user_id, email, first_name, last_name, role FROM User WHERE user_id = ?",
     [payload.user_id]
   );
   const user = rows[0];
@@ -68,6 +70,7 @@ export async function getUserFromToken(): Promise<AuthTokenPayload | null> {
     email: user.email,
     first_name: user.first_name || undefined,
     last_name: user.last_name || undefined,
+    role: user.role,
   };
 }
 

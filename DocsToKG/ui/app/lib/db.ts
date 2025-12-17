@@ -58,6 +58,7 @@ export async function ensureSchema(): Promise<void> {
       birth_date DATE,
       email VARCHAR(320) UNIQUE,
       address VARCHAR(512),
+      role ENUM('admin','member','user') DEFAULT 'user',
       password VARCHAR(255),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -137,6 +138,15 @@ export async function ensureSchema(): Promise<void> {
   // Ensure is_active exists on older databases (ignore if already present)
   try {
     await pool.query(`ALTER TABLE Project ADD COLUMN is_active BOOLEAN DEFAULT FALSE AFTER is_favorite`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
+
+  // Ensure role exists on older databases (ignore if already present)
+  try {
+    await pool.query(`ALTER TABLE User ADD COLUMN role ENUM('admin','member','user') DEFAULT 'user' AFTER address`);
   } catch (err: any) {
     if (err?.code !== "ER_DUP_FIELDNAME") {
       throw err;

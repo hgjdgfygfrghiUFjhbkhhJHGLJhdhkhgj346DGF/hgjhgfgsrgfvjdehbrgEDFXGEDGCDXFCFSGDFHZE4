@@ -4,16 +4,16 @@ import { createToken, setAuthCookie, verifyPassword } from "@/app/lib/auth";
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, role } = await request.json();
 
-    if (!email || !password) {
-      return NextResponse.json({ message: "Missing email or password" }, { status: 400 });
+    if (!email || !password || !role) {
+      return NextResponse.json({ message: "Missing email, password, or role" }, { status: 400 });
     }
 
     await ensureSchema();
     const pool = await getConnection();
     const [rows] = await pool.query(
-      "SELECT user_id, email, password, first_name, last_name FROM User WHERE email = ?",
+      "SELECT user_id, email, password, first_name, last_name, role FROM User WHERE email = ?",
       [email]
     );
 
@@ -27,12 +27,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
     }
 
+    // Enforce role match
+    if (user.role !== role) {
+      return NextResponse.json({ message: "Role mismatch for this account" }, { status: 403 });
+    }
+
     const token = createToken({ user_id: user.user_id, email: user.email });
     const response = NextResponse.json({
       user_id: user.user_id,
       email: user.email,
       first_name: user.first_name,
       last_name: user.last_name,
+      role: user.role,
     });
 
     setAuthCookie(response, token);
