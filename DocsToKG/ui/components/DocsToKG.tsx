@@ -12,7 +12,8 @@ import TopMenuBar from "./TopMenuBar";
 import type { Project } from "./project_management/ProjectManagement";
 import { useAuth } from "./AuthProvider";
 import UsersAdmin from "./admin/UsersAdmin";
-import { Users, FolderKanban, GitBranch, Zap, Settings as SettingsIcon } from "lucide-react";
+import AdminStatistics from "./admin/AdminStatistics";
+import { Users, BarChart3 } from "lucide-react";
 
 export default function DocsToKG() {
   const [activeTab, setActiveTab] = useState("Projects");
@@ -25,12 +26,15 @@ export default function DocsToKG() {
     loadActiveProject();
   }, []);
 
-  // Force admin to "Users" tab only
+  // For admins, ensure active tab is one of the allowed admin tabs; default to Users
   useEffect(() => {
-    if (user?.role === 'admin' && activeTab !== 'Users') {
-      setActiveTab('Users');
+    if (user?.role === 'admin') {
+      const allowed = ["Users", "Statistics"];
+      if (!allowed.includes(activeTab)) {
+        setActiveTab("Users");
+      }
     }
-  }, [user?.role]);
+  }, [user?.role, activeTab]);
 
   const loadActiveProject = async () => {
     try {
@@ -67,8 +71,10 @@ export default function DocsToKG() {
   };
 
   const renderContent = () => {
-    // Admin sees only Users for now
-    if (user?.role === 'admin') return <UsersAdmin />;
+    if (user?.role === 'admin') {
+      if (activeTab === "Statistics") return <AdminStatistics />;
+      return <UsersAdmin />;
+    }
     switch (activeTab) {
       case "Users":
         return <UsersAdmin />;
@@ -126,6 +132,7 @@ export default function DocsToKG() {
           currentProjectName={activeProject?.name || "Custom Browser"}
           tabs={user?.role === 'admin' ? [
             { name: "Users", icon: Users },
+            { name: "Statistics", icon: BarChart3 },
           ] : undefined}
         />
         
