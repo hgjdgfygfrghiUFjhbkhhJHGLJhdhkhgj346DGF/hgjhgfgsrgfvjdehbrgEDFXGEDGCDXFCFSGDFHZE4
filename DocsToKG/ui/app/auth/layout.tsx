@@ -7,18 +7,18 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex flex-col text-white">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-gray-800 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center space-x-2">
-              <Database className="h-6 w-6 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">DocsToKG</span>
+              <Database className="h-6 w-6 text-blue-500" />
+              <span className="text-xl font-bold text-white">DocsToKG</span>
             </Link>
             <Link
               href="/"
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-gray-300 hover:text-white"
             >
               ← Back to Home
             </Link>
@@ -32,8 +32,8 @@ export default function AuthLayout({
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-600">
+      <footer className="border-t border-gray-800 bg-gray-900 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
           © {new Date().getFullYear()} DocsToKG. All rights reserved.
         </div>
       </footer>

@@ -423,10 +423,10 @@ export default function RegisterPage() {
                 type={showConfirmPassword ? "text" : "password"}
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className={`block w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition ${
+                className={`block w-full pl-10 pr-10 py-2 border rounded-lg bg-gray-700 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 outline-none transition ${
                   formData.confirmPassword && formData.password !== formData.confirmPassword
-                    ? "border-red-300 focus:border-red-500"
-                    : "border-gray-300 focus:border-blue-500"
+                    ? "border-red-600 focus:border-red-500"
+                    : "border-gray-600 focus:border-blue-500"
                 }`}
                 placeholder="••••••••"
               />
