@@ -47,6 +47,13 @@ const UsersAdmin: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
   const [expandedView, setExpandedView] = useState<"projects" | "history" | null>(null);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFilter, setSearchFilter] = useState<"all" | "user" | "email" | "role" | "birth_date" | "address">("all");
+  const [useRegex, setUseRegex] = useState(false);
+  const [matchCase, setMatchCase] = useState(false);
+  const [matchWholeWord, setMatchWholeWord] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -102,6 +109,63 @@ const UsersAdmin: React.FC = () => {
     setExpandedView(view);
   };
 
+  const matchesSearch = (item: AdminUserItem): boolean => {
+    if (!searchQuery.trim()) return true;
+    
+    const getValue = (filter: string): string => {
+      switch (filter) {
+        case "user":
+          return ((item.user.first_name || "") + " " + (item.user.last_name || "")).trim() || "";
+        case "email":
+          return item.user.email;
+        case "role":
+          return item.user.role;
+        case "birth_date":
+          return item.user.birth_date || "";
+        case "address":
+          return item.user.address || "";
+        case "all":
+        default:
+          return [
+            item.user.first_name,
+            item.user.last_name,
+            item.user.email,
+            item.user.role,
+            item.user.birth_date,
+            item.user.address
+          ].filter(Boolean).join(" ");
+      }
+    };
+    
+    let searchText = getValue(searchFilter);
+    let query = searchQuery;
+    
+    if (!matchCase) {
+      searchText = searchText.toLowerCase();
+      query = query.toLowerCase();
+    }
+    
+    if (useRegex) {
+      try {
+        const flags = matchCase ? "" : "i";
+        const regex = new RegExp(query, flags);
+        return regex.test(searchText);
+      } catch {
+        return false;
+      }
+    }
+    
+    if (matchWholeWord) {
+      const pattern = `\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`;
+      const regex = new RegExp(pattern, matchCase ? "" : "i");
+      return regex.test(searchText);
+    }
+    
+    return searchText.includes(query);
+  };
+  
+  const filteredItems = items.filter(matchesSearch);
+
   const renderProjects = (projects: Project[]) => {
     if (projects.length === 0) {
       return <div className="text-gray-400">No projects.</div>;
@@ -111,6 +175,8 @@ const UsersAdmin: React.FC = () => {
         <thead>
           <tr className="text-left border-b border-gray-200 dark:border-[#2a2a2a]">
             <th className="py-2 pr-4">Project</th>
+            <th className="py-2 pr-4">Description</th>
+            <th className="py-2 pr-4">Tags</th>
             <th className="py-2 pr-4">Status</th>
             <th className="py-2 pr-4">Active</th>
             <th className="py-2 pr-4">Created</th>
@@ -120,6 +186,8 @@ const UsersAdmin: React.FC = () => {
           {projects.map((p) => (
             <tr key={p.project_name} className="border-b border-gray-100 dark:border-[#1f1f1f]">
               <td className="py-2 pr-4 font-medium">{p.project_name}</td>
+              <td className="py-2 pr-4 text-xs text-gray-400 max-w-xs truncate">{p.description || "—"}</td>
+              <td className="py-2 pr-4 text-xs text-gray-400">{p.tags || "—"}</td>
               <td className="py-2 pr-4 text-xs text-gray-500">{p.status}</td>
               <td className="py-2 pr-4 text-xs">{p.is_active ? "Yes" : "No"}</td>
               <td className="py-2 pr-4 text-xs">{new Date(p.created_at).toLocaleString()}</td>
@@ -168,8 +236,62 @@ const UsersAdmin: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Search Bar */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0f0f0f] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value as any)}
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0f0f0f] text-sm"
+          >
+            <option value="all">All fields</option>
+            <option value="user">User name</option>
+            <option value="email">Email</option>
+            <option value="role">Role</option>
+            <option value="birth_date">Birth date</option>
+            <option value="address">Address</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={useRegex}
+              onChange={(e) => setUseRegex(e.target.checked)}
+              className="rounded border-gray-300 dark:border-[#2a2a2a]"
+            />
+            <span className="text-gray-600 dark:text-gray-400">Use Regular Expression</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={matchCase}
+              onChange={(e) => setMatchCase(e.target.checked)}
+              className="rounded border-gray-300 dark:border-[#2a2a2a]"
+            />
+            <span className="text-gray-600 dark:text-gray-400">Match Case</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={matchWholeWord}
+              onChange={(e) => setMatchWholeWord(e.target.checked)}
+              className="rounded border-gray-300 dark:border-[#2a2a2a]"
+            />
+            <span className="text-gray-600 dark:text-gray-400">Match Whole Word</span>
+          </label>
+        </div>
+      </div>
+
       <div className="text-sm text-gray-500 dark:text-gray-400">
-        Total users: {items.length}
+        Showing {filteredItems.length} of {items.length} users
       </div>
 
       <div className="overflow-x-auto">
@@ -178,6 +300,8 @@ const UsersAdmin: React.FC = () => {
             <tr className="text-left border-b border-gray-200 dark:border-[#2a2a2a]">
               <th className="py-2 pr-4">User</th>
               <th className="py-2 pr-4">Email</th>
+              <th className="py-2 pr-4">Birth Date</th>
+              <th className="py-2 pr-4">Address</th>
               <th className="py-2 pr-4">Role</th>
               <th className="py-2 pr-4">Connected</th>
               <th className="py-2 pr-4">Blocked</th>
@@ -186,13 +310,15 @@ const UsersAdmin: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {items.map(({ user, projects, history }) => (
+            {filteredItems.map(({ user, projects, history }) => (
               <React.Fragment key={user.user_id}>
                 <tr className="border-b border-gray-100 dark:border-[#1f1f1f]">
                   <td className="py-2 pr-4">
                     {(user.first_name || "") + " " + (user.last_name || "").trim() || "—"}
                   </td>
                   <td className="py-2 pr-4">{user.email}</td>
+                  <td className="py-2 pr-4 text-sm">{user.birth_date ? new Date(user.birth_date).toLocaleDateString() : "—"}</td>
+                  <td className="py-2 pr-4 text-sm max-w-xs truncate">{user.address || "—"}</td>
                   <td className="py-2 pr-4">{user.role}</td>
                   <td className="py-2 pr-4">
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${user.is_connected ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' : 'bg-gray-200 text-gray-700 dark:bg-[#2a2a2a] dark:text-gray-300'}`}>
@@ -233,14 +359,14 @@ const UsersAdmin: React.FC = () => {
                 </tr>
                 {expandedUserId === user.user_id && expandedView === "projects" && (
                   <tr className="bg-gray-50 dark:bg-[#0f0f0f]">
-                    <td colSpan={7} className="p-4">
+                    <td colSpan={9} className="p-4">
                       {renderProjects(projects)}
                     </td>
                   </tr>
                 )}
                 {expandedUserId === user.user_id && expandedView === "history" && (
                   <tr className="bg-gray-50 dark:bg-[#0f0f0f]">
-                    <td colSpan={7} className="p-4">
+                    <td colSpan={9} className="p-4">
                       {renderHistory(history)}
                     </td>
                   </tr>
