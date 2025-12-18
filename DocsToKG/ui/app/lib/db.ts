@@ -63,6 +63,15 @@ export async function ensureSchema(): Promise<void> {
       is_connected TINYINT(1) DEFAULT 0,
       is_blocked BOOLEAN DEFAULT FALSE,
       password VARCHAR(255),
+      avatar_path VARCHAR(1024),
+      bio TEXT,
+      website VARCHAR(512),
+      phone VARCHAR(50),
+      gender ENUM('Male','Female'),
+      language VARCHAR(50),
+      timezone VARCHAR(100),
+      theme ENUM('light','dark','system') DEFAULT 'system',
+      two_factor_enabled BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
@@ -136,6 +145,7 @@ export async function ensureSchema(): Promise<void> {
       history_id BIGINT AUTO_INCREMENT PRIMARY KEY,
       user_id BIGINT NOT NULL,
       event ENUM('login','logout') NOT NULL,
+      device VARCHAR(512),
       event_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_history_user (user_id),
       CONSTRAINT fk_history_user FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
@@ -179,6 +189,38 @@ export async function ensureSchema(): Promise<void> {
   } catch (err: any) {
     if (err?.code !== "ER_DUP_FIELDNAME") {
       throw err;
+    }
+  }
+
+  // Ensure new profile fields exist on older databases
+  const profileColumns = [
+    { col: 'avatar_path', def: 'VARCHAR(1024)' },
+    { col: 'bio', def: 'TEXT' },
+    { col: 'website', def: 'VARCHAR(512)' },
+    { col: 'phone', def: 'VARCHAR(50)' },
+    { col: 'gender', def: "ENUM('Male','Female')" },
+    { col: 'language', def: 'VARCHAR(50)' },
+    { col: 'timezone', def: 'VARCHAR(100)' },
+    { col: 'theme', def: "ENUM('light','dark','system') DEFAULT 'system'" },
+    { col: 'two_factor_enabled', def: 'BOOLEAN DEFAULT FALSE' }
+  ];
+  
+  for (const { col, def } of profileColumns) {
+    try {
+      await pool.query(`ALTER TABLE User ADD COLUMN ${col} ${def}`);
+    } catch (err: any) {
+      if (err?.code !== "ER_DUP_FIELDNAME") {
+        console.warn(`Could not add column ${col}:`, err?.message);
+      }
+    }
+  }
+
+  // Ensure device column in UsersHistory
+  try {
+    await pool.query(`ALTER TABLE UsersHistory ADD COLUMN device VARCHAR(512) AFTER event`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_FIELDNAME") {
+      console.warn('Could not add device column:', err?.message);
     }
   }
 

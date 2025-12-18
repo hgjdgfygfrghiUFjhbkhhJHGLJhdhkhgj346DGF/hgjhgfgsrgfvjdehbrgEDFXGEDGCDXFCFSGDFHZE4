@@ -14,10 +14,12 @@ import {
   Sun,
   CreditCard,
   Database,
-  ChevronDown
+  ChevronDown,
+  X
 } from "lucide-react";
 import { useTheme } from "./themes";
 import { useAuth } from "./AuthProvider";
+import UserProfile from "./UserProfile";
 
 const TopMenuBar = () => {
   const { darkMode, themeClasses, toggleDarkMode } = useTheme();
@@ -25,6 +27,7 @@ const TopMenuBar = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showHelpMenu, setShowHelpMenu] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   
   // Derive user display data from auth
   const user = {
@@ -49,7 +52,8 @@ const TopMenuBar = () => {
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
-    <div className={`sticky top-0 z-50 border-b ${themeClasses.border.default} ${themeClasses.bg.main}`}>
+    <>
+      <div className={`sticky top-0 z-50 border-b ${themeClasses.border.default} ${themeClasses.bg.main}`}>
       <div className="flex items-center justify-between h-16 px-6">
         
         {/* Left Section - Logo and Search */}
@@ -230,10 +234,16 @@ const TopMenuBar = () => {
                   </div>
                 </div>
                 <div className="py-2">
-                  <a href="/profile" className={`flex items-center px-4 py-2 text-sm hover:${themeClasses.bg.hover} ${themeClasses.text.secondary}`}>
+                  <button 
+                    onClick={() => {
+                      setShowProfile(true);
+                      setShowUserMenu(false);
+                    }}
+                    className={`flex items-center w-full px-4 py-2 text-sm hover:${themeClasses.bg.hover} ${themeClasses.text.secondary}`}
+                  >
                     <User className="h-4 w-4 mr-2" />
                     Your Profile
-                  </a>
+                  </button>
                   <a href="/account" className={`flex items-center px-4 py-2 text-sm hover:${themeClasses.bg.hover} ${themeClasses.text.secondary}`}>
                     <Settings className="h-4 w-4 mr-2" />
                     Account Settings
@@ -254,6 +264,22 @@ const TopMenuBar = () => {
         </div>
       </div>
     </div>
+
+    {/* Profile Modal */}
+    {showProfile && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
+        <div className="relative w-full h-full overflow-auto bg-gray-900">
+          <button
+            onClick={() => setShowProfile(false)}
+            className="fixed top-4 right-4 z-[101] p-2 bg-gray-800 hover:bg-gray-700 rounded-full"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <UserProfile />
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

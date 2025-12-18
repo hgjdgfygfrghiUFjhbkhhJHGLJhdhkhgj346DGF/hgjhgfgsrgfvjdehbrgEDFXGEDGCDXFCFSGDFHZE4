@@ -39,10 +39,40 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    // Mark user as connected and record login history
+    // Mark user as connected and record login history with device info
     try {
+      // Parse user-agent to extract device information
+      const userAgent = request.headers.get("user-agent") || "";
+      let device = "Unknown";
+      
+      // Basic device detection
+      if (userAgent.includes("Mobile") || userAgent.includes("Android") || userAgent.includes("iPhone")) {
+        device = "Mobile";
+      } else if (userAgent.includes("Tablet") || userAgent.includes("iPad")) {
+        device = "Tablet";
+      } else {
+        device = "Desktop";
+      }
+      
+      // Extract browser
+      let browser = "Unknown";
+      if (userAgent.includes("Chrome")) browser = "Chrome";
+      else if (userAgent.includes("Firefox")) browser = "Firefox";
+      else if (userAgent.includes("Safari")) browser = "Safari";
+      else if (userAgent.includes("Edge")) browser = "Edge";
+      
+      // Extract OS
+      let os = "Unknown";
+      if (userAgent.includes("Windows")) os = "Windows";
+      else if (userAgent.includes("Mac OS")) os = "macOS";
+      else if (userAgent.includes("Linux")) os = "Linux";
+      else if (userAgent.includes("Android")) os = "Android";
+      else if (userAgent.includes("iOS")) os = "iOS";
+      
+      const deviceString = `${device} · ${browser} · ${os}`;
+      
       await pool.query("UPDATE User SET is_connected = 1 WHERE user_id = ?", [user.user_id]);
-      await pool.query("INSERT INTO UsersHistory (user_id, event) VALUES (?, 'login')", [user.user_id]);
+      await pool.query("INSERT INTO UsersHistory (user_id, event, device) VALUES (?, 'login', ?)", [user.user_id, deviceString]);
     } catch (err) {
       console.error("Failed to update connection state or history", err);
     }
