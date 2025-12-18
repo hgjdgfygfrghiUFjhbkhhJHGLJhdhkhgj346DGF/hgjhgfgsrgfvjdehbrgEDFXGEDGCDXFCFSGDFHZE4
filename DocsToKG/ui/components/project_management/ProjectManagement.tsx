@@ -10,6 +10,7 @@ export type ProjectStatus = "draft" | "processing" | "analyzing" | "completed" |
 
 export interface Project {
   id: string;
+  userId: number;
   name: string;
   description: string;
   createdAt: Date;
@@ -40,6 +41,21 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   onProjectActivated,
 }) => {
   const { themeClasses } = useTheme();
+    const mapApiProject = (p: any): Project => ({
+      id: `${p.project_name}-${p.user_id}`,
+      userId: p.user_id,
+      name: p.project_name,
+      description: p.description || "",
+      createdAt: new Date(p.created_at),
+      updatedAt: new Date(p.updated_at),
+      status: p.status as ProjectStatus,
+      progress: p.percentage || 0,
+      documentCount: 0,
+      graphCount: 0,
+      isStarred: p.is_favorite || false,
+      tags: p.tags ? p.tags.split(",") : [],
+    });
+
   const [view, setView] = useState<"dashboard" | "list" | "detail" | "new">("dashboard");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -56,19 +72,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
       const res = await fetch("/api/projects");
       if (res.ok) {
         const data = await res.json();
-        const mappedProjects: Project[] = data.projects.map((p: any) => ({
-          id: `${p.project_name}-${p.user_id}`,
-          name: p.project_name,
-          description: p.description || "",
-          createdAt: new Date(p.created_at),
-          updatedAt: new Date(p.updated_at),
-          status: p.status as ProjectStatus,
-          progress: p.percentage || 0,
-          documentCount: 0, // Will be populated from Document table later
-          graphCount: 0,
-          isStarred: p.is_favorite || false,
-          tags: p.tags ? p.tags.split(",") : []
-        }));
+        const mappedProjects: Project[] = data.projects.map(mapApiProject);
         setProjects(mappedProjects);
       }
     } catch (err) {
@@ -105,19 +109,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
       }
 
       const data = await res.json();
-      const newProject: Project = {
-        id: `${data.project.project_name}-${data.project.user_id}`,
-        name: data.project.project_name,
-        description: data.project.description || "",
-        createdAt: new Date(data.project.created_at),
-        updatedAt: new Date(data.project.updated_at),
-        status: data.project.status as ProjectStatus,
-        progress: data.project.percentage || 0,
-        documentCount: 0,
-        graphCount: 0,
-        isStarred: data.project.is_favorite || false,
-        tags: data.project.tags ? data.project.tags.split(",") : []
-      };
+      const newProject: Project = mapApiProject(data.project);
       
       setProjects(prev => [newProject, ...prev]);
       setSelectedProject(newProject);
@@ -132,12 +124,14 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     }
   };
 
-  const handleUpdateProject = async (updatedProject: Project) => {
+  const handleUpdateProject = async (updatedProject: Project, originalName?: string) => {
     try {
-      const res = await fetch(`/api/projects/${encodeURIComponent(updatedProject.name)}`, {
+      const targetName = originalName || updatedProject.name;
+      const res = await fetch(`/api/projects/${encodeURIComponent(targetName)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: updatedProject.name,
           description: updatedProject.description,
           is_favorite: updatedProject.isStarred,
           status: updatedProject.status,
@@ -147,11 +141,13 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
       });
 
       if (res.ok) {
-        setProjects(prev => prev.map(p => 
-          p.id === updatedProject.id ? updatedProject : p
+        const data = await res.json();
+        const refreshed = mapApiProject(data.project);
+        setProjects(prev => prev.map(p =>
+          p.id === updatedProject.id ? refreshed : p
         ));
-        setSelectedProject(updatedProject);
-        onProjectActivated(updatedProject);
+        setSelectedProject(refreshed);
+        onProjectActivated(refreshed);
       } else {
         alert("Failed to update project");
       }

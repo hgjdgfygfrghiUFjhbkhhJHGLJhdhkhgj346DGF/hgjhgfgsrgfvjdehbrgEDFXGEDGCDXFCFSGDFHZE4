@@ -27,7 +27,7 @@ import { Database } from "lucide-react";
 interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
-  onUpdateProject: (project: Project) => void;
+  onUpdateProject: (project: Project, originalName?: string) => void;
   onDeleteProject: (projectId: string) => void;
   onExportProject: (projectId: string, format: "csv" | "sql") => void;
   onResumeProject: (projectId: string) => void;
@@ -48,7 +48,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const [editedProject, setEditedProject] = useState({ ...project });
 
   const handleSave = () => {
-    onUpdateProject(editedProject);
+    onUpdateProject(editedProject, project.name);
     setIsEditing(false);
   };
 
@@ -112,6 +112,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       onClick: () => {
         const newProject = {
           ...project,
+          userId: project.userId,
           id: Date.now().toString(),
           name: `${project.name} (Copy)`,
           createdAt: new Date(),
