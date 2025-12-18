@@ -50,10 +50,19 @@ const UsersAdmin: React.FC = () => {
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchFilter, setSearchFilter] = useState<"all" | "user" | "email" | "role" | "birth_date" | "address">("all");
+  const [searchFilter, setSearchFilter] = useState<"all" | "user" | "email" | "role" | "birth_date" | "address" | "project" | "history">("all");
   const [useRegex, setUseRegex] = useState(false);
   const [matchCase, setMatchCase] = useState(false);
   const [matchWholeWord, setMatchWholeWord] = useState(false);
+  
+  // Time-based filters
+  const [loginStartDate, setLoginStartDate] = useState("");
+  const [loginEndDate, setLoginEndDate] = useState("");
+  const [logoutStartDate, setLogoutStartDate] = useState("");
+  const [logoutEndDate, setLogoutEndDate] = useState("");
+  const [minDuration, setMinDuration] = useState("");
+  const [maxDuration, setMaxDuration] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -99,6 +108,29 @@ const UsersAdmin: React.FC = () => {
     }
   };
 
+  const updateRole = async (userId: number, newRole: "user" | "member") => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update role");
+      }
+      setItems((prev) =>
+        prev.map((item) =>
+          item.user.user_id === userId
+            ? { ...item, user: { ...item.user, role: newRole } }
+            : item
+        )
+      );
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   const toggleDetail = (user_id: number, view: "projects" | "history") => {
     if (expandedUserId === user_id && expandedView === view) {
       setExpandedUserId(null);
@@ -110,58 +142,129 @@ const UsersAdmin: React.FC = () => {
   };
 
   const matchesSearch = (item: AdminUserItem): boolean => {
-    if (!searchQuery.trim()) return true;
+    if (!searchQuery.trim() && !loginStartDate && !loginEndDate && !logoutStartDate && !logoutEndDate && !minDuration && !maxDuration) return true;
     
-    const getValue = (filter: string): string => {
-      switch (filter) {
-        case "user":
-          return ((item.user.first_name || "") + " " + (item.user.last_name || "")).trim() || "";
-        case "email":
-          return item.user.email;
-        case "role":
-          return item.user.role;
-        case "birth_date":
-          return item.user.birth_date || "";
-        case "address":
-          return item.user.address || "";
-        case "all":
-        default:
-          return [
-            item.user.first_name,
-            item.user.last_name,
-            item.user.email,
-            item.user.role,
-            item.user.birth_date,
-            item.user.address
-          ].filter(Boolean).join(" ");
+    // Text-based search
+    if (searchQuery.trim()) {
+      const getValue = (filter: string): string => {
+        switch (filter) {
+          case "user":
+            return ((item.user.first_name || "") + " " + (item.user.last_name || "")).trim() || "";
+          case "email":
+            return item.user.email;
+          case "role":
+            return item.user.role;
+          case "birth_date":
+            return item.user.birth_date || "";
+          case "address":
+            return item.user.address || "";
+          case "project":
+            return item.projects.map(p => 
+              [p.project_name, p.description, p.tags, p.status].filter(Boolean).join(" ")
+            ).join(" ");
+          case "history":
+            return item.history.map(h => 
+              `${h.event} ${new Date(h.event_time).toLocaleString()}`
+            ).join(" ");
+          case "all":
+          default:
+            return [
+              item.user.first_name,
+              item.user.last_name,
+              item.user.email,
+              item.user.role,
+              item.user.birth_date,
+              item.user.address,
+              ...item.projects.map(p => [p.project_name, p.description, p.tags].filter(Boolean).join(" ")),
+              ...item.history.map(h => h.event)
+            ].filter(Boolean).join(" ");
+        }
+      };
+      
+      let searchText = getValue(searchFilter);
+      let query = searchQuery;
+      
+      if (!matchCase) {
+        searchText = searchText.toLowerCase();
+        query = query.toLowerCase();
       }
-    };
-    
-    let searchText = getValue(searchFilter);
-    let query = searchQuery;
-    
-    if (!matchCase) {
-      searchText = searchText.toLowerCase();
-      query = query.toLowerCase();
-    }
-    
-    if (useRegex) {
-      try {
-        const flags = matchCase ? "" : "i";
-        const regex = new RegExp(query, flags);
-        return regex.test(searchText);
-      } catch {
-        return false;
+      
+      if (useRegex) {
+        try {
+          const flags = matchCase ? "" : "i";
+          const regex = new RegExp(query, flags);
+          if (!regex.test(searchText)) return false;
+        } catch {
+          return false;
+        }
+      } else if (matchWholeWord) {
+        const pattern = `\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`;
+        const regex = new RegExp(pattern, matchCase ? "" : "i");
+        if (!regex.test(searchText)) return false;
+      } else {
+        if (!searchText.includes(query)) return false;
       }
     }
     
-    if (matchWholeWord) {
-      const pattern = `\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`;
-      const regex = new RegExp(pattern, matchCase ? "" : "i");
-      return regex.test(searchText);
+    // Time-based filters
+    const logins = item.history.filter(h => h.event === "login");
+    const logouts = item.history.filter(h => h.event === "logout");
+    
+    // Login time range filter
+    if (loginStartDate || loginEndDate) {
+      const hasMatchingLogin = logins.some(login => {
+        const loginTime = new Date(login.event_time);
+        if (loginStartDate && loginTime < new Date(loginStartDate)) return false;
+        if (loginEndDate && loginTime > new Date(loginEndDate)) return false;
+        return true;
+      });
+      if (!hasMatchingLogin) return false;
     }
     
-    return searchText.includes(query);
+    // Logout time range filter
+    if (logoutStartDate || logoutEndDate) {
+      const hasMatchingLogout = logouts.some(logout => {
+        const logoutTime = new Date(logout.event_time);
+        if (logoutStartDate && logoutTime < new Date(logoutStartDate)) return false;
+        if (logoutEndDate && logoutTime > new Date(logoutEndDate)) return false;
+        return true;
+      });
+      if (!hasMatchingLogout) return false;
+    }
+    
+    // Session duration filter
+    if (minDuration || maxDuration) {
+      // Calculate session durations by pairing logins with subsequent logouts
+      const sortedHistory = [...item.history].sort((a, b) => 
+        new Date(a.event_time).getTime() - new Date(b.event_time).getTime()
+      );
+      
+      const sessions: number[] = [];
+      let lastLogin: Date | null = null;
+      
+      for (const event of sortedHistory) {
+        const eventTime = new Date(event.event_time);
+        if (event.event === "login") {
+          lastLogin = eventTime;
+        } else if (event.event === "logout" && lastLogin) {
+          const durationMinutes = (eventTime.getTime() - lastLogin.getTime()) / 60000;
+          if (durationMinutes >= 0) sessions.push(durationMinutes);
+          lastLogin = null;
+        }
+      }
+      
+      if (sessions.length === 0) return false;
+      
+      const hasMatchingDuration = sessions.some(duration => {
+        const minDur = minDuration ? parseFloat(minDuration) : 0;
+        const maxDur = maxDuration ? parseFloat(maxDuration) : Infinity;
+        return duration >= minDur && duration <= maxDur;
+      });
+      
+      if (!hasMatchingDuration) return false;
+    }
+    
+    return true;
   };
   
   const filteredItems = items.filter(matchesSearch);
@@ -257,7 +360,19 @@ const UsersAdmin: React.FC = () => {
             <option value="role">Role</option>
             <option value="birth_date">Birth date</option>
             <option value="address">Address</option>
+            <option value="project">Projects</option>
+            <option value="history">History</option>
           </select>
+          <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              showAdvancedFilters
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-200 dark:bg-[#1f1f1f] text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-[#2a2a2a]"
+            }`}
+          >
+            {showAdvancedFilters ? "Hide" : "Show"} Advanced
+          </button>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <label className="flex items-center gap-2 cursor-pointer">
@@ -288,6 +403,117 @@ const UsersAdmin: React.FC = () => {
             <span className="text-gray-600 dark:text-gray-400">Match Whole Word</span>
           </label>
         </div>
+
+        {/* Advanced Filters Panel */}
+        {showAdvancedFilters && (
+          <div className="border border-gray-200 dark:border-[#2a2a2a] rounded-lg p-4 bg-gray-50 dark:bg-[#0a0a0a] space-y-4">
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Advanced Time & Duration Filters
+            </div>
+            
+            {/* Login Time Range */}
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                Login Time Range
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">From</label>
+                  <input
+                    type="datetime-local"
+                    value={loginStartDate}
+                    onChange={(e) => setLoginStartDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0f0f0f] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">To</label>
+                  <input
+                    type="datetime-local"
+                    value={loginEndDate}
+                    onChange={(e) => setLoginEndDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0f0f0f] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Logout Time Range */}
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                Logout Time Range
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">From</label>
+                  <input
+                    type="datetime-local"
+                    value={logoutStartDate}
+                    onChange={(e) => setLogoutStartDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0f0f0f] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">To</label>
+                  <input
+                    type="datetime-local"
+                    value={logoutEndDate}
+                    onChange={(e) => setLogoutEndDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0f0f0f] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Session Duration */}
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                Session Duration (minutes)
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Minimum</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="e.g., 30"
+                    value={minDuration}
+                    onChange={(e) => setMinDuration(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0f0f0f] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-500 mb-1">Maximum</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="e.g., 120"
+                    value={maxDuration}
+                    onChange={(e) => setMaxDuration(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0f0f0f] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Clear Button */}
+            <button
+              onClick={() => {
+                setLoginStartDate("");
+                setLoginEndDate("");
+                setLogoutStartDate("");
+                setLogoutEndDate("");
+                setMinDuration("");
+                setMaxDuration("");
+              }}
+              className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-[#1f1f1f] text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-[#2a2a2a] text-sm transition-colors"
+            >
+              Clear Advanced Filters
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -319,7 +545,22 @@ const UsersAdmin: React.FC = () => {
                   <td className="py-2 pr-4">{user.email}</td>
                   <td className="py-2 pr-4 text-sm">{user.birth_date ? new Date(user.birth_date).toLocaleDateString() : "—"}</td>
                   <td className="py-2 pr-4 text-sm max-w-xs truncate">{user.address || "—"}</td>
-                  <td className="py-2 pr-4">{user.role}</td>
+                  <td className="py-2 pr-4">
+                    {user.role === "admin" ? (
+                      <span className="px-2 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs">
+                        admin
+                      </span>
+                    ) : (
+                      <select
+                        value={user.role}
+                        onChange={(e) => updateRole(user.user_id, e.target.value as "user" | "member")}
+                        className="px-2 py-1 rounded-full bg-gray-200 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 text-xs border-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      >
+                        <option value="user">user</option>
+                        <option value="member">member</option>
+                      </select>
+                    )}
+                  </td>
                   <td className="py-2 pr-4">
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${user.is_connected ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' : 'bg-gray-200 text-gray-700 dark:bg-[#2a2a2a] dark:text-gray-300'}`}>
                       <span className={`h-2 w-2 rounded-full ${user.is_connected ? 'bg-green-500' : 'bg-gray-400'}`}></span>
