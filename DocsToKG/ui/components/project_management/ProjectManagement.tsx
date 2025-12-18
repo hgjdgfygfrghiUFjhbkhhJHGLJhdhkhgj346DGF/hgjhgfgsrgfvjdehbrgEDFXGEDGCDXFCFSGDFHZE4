@@ -20,6 +20,7 @@ export interface Project {
   documentCount: number;
   graphCount: number;
   isStarred: boolean;
+  isActive: boolean;
   folder?: string;
   tags: string[];
 }
@@ -41,6 +42,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   onProjectActivated,
 }) => {
   const { themeClasses } = useTheme();
+  const [activeCount, setActiveCount] = useState<number>(0);
     const mapApiProject = (p: any): Project => ({
       id: `${p.project_name}-${p.user_id}`,
       userId: p.user_id,
@@ -53,6 +55,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
       documentCount: 0,
       graphCount: 0,
       isStarred: p.is_favorite || false,
+      isActive: !!p.is_active,
       tags: p.tags ? p.tags.split(",") : [],
     });
 
@@ -74,6 +77,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
         const data = await res.json();
         const mappedProjects: Project[] = data.projects.map(mapApiProject);
         setProjects(mappedProjects);
+        setActiveCount(typeof data.activeCount === "number" ? data.activeCount : mappedProjects.filter(p => p.isActive).length);
       }
     } catch (err) {
       console.error("Failed to fetch projects:", err);
@@ -112,6 +116,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
       const newProject: Project = mapApiProject(data.project);
       
       setProjects(prev => [newProject, ...prev]);
+      setActiveCount(prev => newProject.isActive ? prev + 1 : prev);
       setSelectedProject(newProject);
       onProjectActivated(newProject);
       setView("detail");
@@ -146,6 +151,11 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
         setProjects(prev => prev.map(p =>
           p.id === updatedProject.id ? refreshed : p
         ));
+        setActiveCount(prev => {
+          const wasActive = projects.find(p => p.id === updatedProject.id)?.isActive;
+          if (wasActive === refreshed.isActive) return prev;
+          return refreshed.isActive ? prev + 1 : Math.max(0, prev - 1);
+        });
         setSelectedProject(refreshed);
         onProjectActivated(refreshed);
       } else {
@@ -248,6 +258,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
           {view === "dashboard" && (
         <ProjectDashboard
           projects={projects}
+              activeCount={activeCount}
               activeProjectId={activeProjectId}
           onViewAll={() => setView("list")}
           onNewProject={() => setView("new")}

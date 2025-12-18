@@ -16,6 +16,7 @@ import ProjectCard from "./ProjectCard";
 
 interface ProjectDashboardProps {
   projects: Project[];
+  activeCount?: number;
   activeProjectId: string | null;
   onViewAll: () => void;
   onNewProject: () => void;
@@ -25,6 +26,7 @@ interface ProjectDashboardProps {
 
 const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
   projects,
+  activeCount,
   activeProjectId,
   onViewAll,
   onNewProject,
@@ -36,7 +38,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({
   // Calculate stats
   const stats: ProjectStats = {
     total: projects.length,
-    active: projects.filter(p => p.status === "processing" || p.status === "analyzing").length,
+    active: typeof activeCount === "number" ? activeCount : projects.filter(p => p.isActive).length,
     completed: projects.filter(p => p.status === "completed").length,
     error: projects.filter(p => p.status === "error").length,
   };

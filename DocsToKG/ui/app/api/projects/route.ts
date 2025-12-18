@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromToken } from "@/app/lib/auth";
 import { getConnection } from "@/app/lib/db";
+import type { RowDataPacket } from "mysql2";
 
 // GET /api/projects - List all projects for the authenticated user
 export async function GET() {
@@ -29,8 +30,16 @@ export async function GET() {
       [user.user_id]
     );
 
+    const [activeCountRows] = await pool.query<RowDataPacket[]>(
+      "SELECT COUNT(*) AS activeCount FROM Project WHERE user_id = ? AND is_active = 1",
+      [user.user_id]
+    );
+    const activeCount = Array.isArray(activeCountRows) && activeCountRows[0]?.activeCount !== undefined
+      ? Number(activeCountRows[0].activeCount)
+      : 0;
+
     const projects = Array.isArray(rows) ? rows : [];
-    return NextResponse.json({ projects });
+    return NextResponse.json({ projects, activeCount });
   } catch (err) {
     console.error("Error fetching projects:", err);
     return NextResponse.json({ message: "Failed to fetch projects" }, { status: 500 });
