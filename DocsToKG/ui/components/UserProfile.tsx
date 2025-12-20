@@ -23,6 +23,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react";
+import { useTheme } from "./themes";
 
 type ProfileData = {
   user_id: number;
@@ -51,6 +52,7 @@ type ActivityItem = {
 };
 
 const UserProfile: React.FC = () => {
+  const { themeClasses, darkMode } = useTheme();
   const [activeSection, setActiveSection] = useState<string>("basic");
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
@@ -173,73 +175,73 @@ const UserProfile: React.FC = () => {
 
   const renderBasicInfo = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
+      <h3 className={`text-lg font-semibold flex items-center gap-2 ${themeClasses.text.primary}`}>
         <User className="h-5 w-5" />
         Basic Information
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-2">First Name</label>
+          <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>First Name</label>
           <input
             type="text"
             value={profile?.first_name || ""}
             onChange={(e) => setProfile(p => p ? { ...p, first_name: e.target.value } : null)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Last Name</label>
+          <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Last Name</label>
           <input
             type="text"
             value={profile?.last_name || ""}
             onChange={(e) => setProfile(p => p ? { ...p, last_name: e.target.value } : null)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Bio</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Bio</label>
         <textarea
           value={profile?.bio || ""}
           onChange={(e) => setProfile(p => p ? { ...p, bio: e.target.value } : null)}
           rows={3}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           placeholder="Tell us about yourself..."
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Avatar URL</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Avatar URL</label>
         <input
           type="text"
           value={profile?.avatar_path || ""}
           onChange={(e) => setProfile(p => p ? { ...p, avatar_path: e.target.value } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           placeholder="https://..."
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Location</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Location</label>
         <input
           type="text"
           value={profile?.address || ""}
           onChange={(e) => setProfile(p => p ? { ...p, address: e.target.value } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           placeholder="City, Country"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Website</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Website</label>
         <input
           type="url"
           value={profile?.website || ""}
           onChange={(e) => setProfile(p => p ? { ...p, website: e.target.value } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           placeholder="https://yourwebsite.com"
         />
       </div>
@@ -247,7 +249,7 @@ const UserProfile: React.FC = () => {
       <button
         onClick={handleSaveProfile}
         disabled={saving}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 disabled:opacity-50"
+        className="px-4 py-2 bg-[#4fb3d9] hover:bg-[#3da3c9] text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
         {saving ? "Saving..." : "Save Changes"}
@@ -257,29 +259,29 @@ const UserProfile: React.FC = () => {
 
   const renderContactInfo = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
+      <h3 className={`text-lg font-semibold flex items-center gap-2 ${themeClasses.text.primary}`}>
         <Mail className="h-5 w-5" />
         Contact Information
       </h3>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Email</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Email</label>
         <input
           type="email"
           value={profile?.email || ""}
           disabled
-          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg opacity-60 cursor-not-allowed"
+          className={`w-full px-3 py-2 rounded-lg opacity-60 cursor-not-allowed ${themeClasses.input}`}
         />
-        <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+        <p className={`text-xs mt-1 ${themeClasses.text.muted}`}>Email cannot be changed</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Phone Number</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Phone Number</label>
         <input
           type="tel"
           value={profile?.phone || ""}
           onChange={(e) => setProfile(p => p ? { ...p, phone: e.target.value } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           placeholder="+1234567890"
         />
       </div>
@@ -287,7 +289,7 @@ const UserProfile: React.FC = () => {
       <button
         onClick={handleSaveProfile}
         disabled={saving}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 disabled:opacity-50"
+        className="px-4 py-2 bg-[#4fb3d9] hover:bg-[#3da3c9] text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
         {saving ? "Saving..." : "Save Changes"}
@@ -297,27 +299,27 @@ const UserProfile: React.FC = () => {
 
   const renderPersonalDetails = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
+      <h3 className={`text-lg font-semibold flex items-center gap-2 ${themeClasses.text.primary}`}>
         <Calendar className="h-5 w-5" />
         Personal Details
       </h3>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Date of Birth</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Date of Birth</label>
         <input
           type="date"
           value={profile?.birth_date || ""}
           onChange={(e) => setProfile(p => p ? { ...p, birth_date: e.target.value } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Gender</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Gender</label>
         <select
           value={profile?.gender || ""}
           onChange={(e) => setProfile(p => p ? { ...p, gender: e.target.value as any } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
         >
           <option value="">Select gender</option>
           <option value="Male">Male</option>
@@ -326,11 +328,11 @@ const UserProfile: React.FC = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Language</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Language</label>
         <select
           value={profile?.language || ""}
           onChange={(e) => setProfile(p => p ? { ...p, language: e.target.value } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
         >
           <option value="">Select language</option>
           <option value="English">English</option>
@@ -344,11 +346,11 @@ const UserProfile: React.FC = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Time Zone</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Time Zone</label>
         <select
           value={profile?.timezone || ""}
           onChange={(e) => setProfile(p => p ? { ...p, timezone: e.target.value } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
         >
           <option value="">Select timezone</option>
           <option value="America/New_York">Eastern Time (ET)</option>
@@ -365,7 +367,7 @@ const UserProfile: React.FC = () => {
       <button
         onClick={handleSaveProfile}
         disabled={saving}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 disabled:opacity-50"
+        className="px-4 py-2 bg-[#4fb3d9] hover:bg-[#3da3c9] text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
         {saving ? "Saving..." : "Save Changes"}
@@ -375,47 +377,47 @@ const UserProfile: React.FC = () => {
 
   const renderSecurity = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
+      <h3 className={`text-lg font-semibold flex items-center gap-2 ${themeClasses.text.primary}`}>
         <Shield className="h-5 w-5" />
         Account & Security
       </h3>
 
-      <div className="p-4 bg-gray-800 rounded-lg space-y-4">
-        <h4 className="font-medium">Change Password</h4>
+      <div className={`p-4 rounded-lg space-y-4 ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
+        <h4 className={`font-medium ${themeClasses.text.primary}`}>Change Password</h4>
         
         <div className="relative">
-          <label className="block text-sm font-medium mb-2">Current Password</label>
+          <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Current Password</label>
           <input
             type={showPassword ? "text" : "password"}
             value={passwordData.currentPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))}
-            className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">New Password</label>
+          <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>New Password</label>
           <input
             type={showPassword ? "text" : "password"}
             value={passwordData.newPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, newPassword: e.target.value }))}
-            className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+          <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Confirm New Password</label>
           <input
             type={showPassword ? "text" : "password"}
             value={passwordData.confirmPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))}
-            className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
           />
         </div>
 
         <button
           onClick={() => setShowPassword(!showPassword)}
-          className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2"
+          className={`text-sm ${themeClasses.text.accent} hover:opacity-80 flex items-center gap-2`}
         >
           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           {showPassword ? "Hide" : "Show"} passwords
@@ -423,36 +425,36 @@ const UserProfile: React.FC = () => {
 
         <button
           onClick={handleChangePassword}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2"
+          className="px-4 py-2 bg-[#4fb3d9] hover:bg-[#3da3c9] text-white rounded-lg flex items-center gap-2"
         >
           <Lock className="h-4 w-4" />
           Change Password
         </button>
       </div>
 
-      <div className="p-4 bg-gray-800 rounded-lg">
-        <h4 className="font-medium mb-2">Two-Factor Authentication</h4>
-        <p className="text-sm text-gray-400 mb-4">
+      <div className={`p-4 rounded-lg ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
+        <h4 className={`font-medium mb-2 ${themeClasses.text.primary}`}>Two-Factor Authentication</h4>
+        <p className={`text-sm mb-4 ${themeClasses.text.secondary}`}>
           {profile?.two_factor_enabled ? "2FA is enabled" : "2FA is disabled"}
         </p>
-        <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">
+        <button className={`px-4 py-2 rounded-lg text-sm ${themeClasses.button.secondary}`}>
           {profile?.two_factor_enabled ? "Disable 2FA" : "Enable 2FA"}
         </button>
       </div>
 
-      <div className="p-4 bg-gray-800 rounded-lg">
-        <h4 className="font-medium mb-2 flex items-center gap-2">
+      <div className={`p-4 rounded-lg ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
+        <h4 className={`font-medium mb-2 flex items-center gap-2 ${themeClasses.text.primary}`}>
           <Activity className="h-4 w-4" />
           Login Activity
         </h4>
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+        <div className={`space-y-2 max-h-64 overflow-y-auto`}>
           {activity.slice(0, 10).map((item, idx) => (
-            <div key={idx} className="text-sm p-2 bg-gray-900 rounded flex justify-between">
+            <div key={idx} className={`text-sm p-2 rounded flex justify-between ${themeClasses.bg.hover}`}>
               <span className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${item.event === "login" ? "bg-green-500" : "bg-gray-500"}`} />
                 {item.event} {item.device && `· ${item.device}`}
               </span>
-              <span className="text-gray-500">{new Date(item.event_time).toLocaleString()}</span>
+              <span className={themeClasses.text.muted}>{new Date(item.event_time).toLocaleString()}</span>
             </div>
           ))}
         </div>
@@ -462,17 +464,17 @@ const UserProfile: React.FC = () => {
 
   const renderPreferences = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
+      <h3 className={`text-lg font-semibold flex items-center gap-2 ${themeClasses.text.primary}`}>
         <Palette className="h-5 w-5" />
         Preferences & Customization
       </h3>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Theme</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Theme</label>
         <select
           value={profile?.theme || "system"}
           onChange={(e) => setProfile(p => p ? { ...p, theme: e.target.value as any } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
         >
           <option value="system">System</option>
           <option value="light">Light</option>
@@ -481,11 +483,11 @@ const UserProfile: React.FC = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Language</label>
+        <label className={`block text-sm font-medium mb-2 ${themeClasses.text.primary}`}>Language</label>
         <select
           value={profile?.language || ""}
           onChange={(e) => setProfile(p => p ? { ...p, language: e.target.value } : null)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${themeClasses.input} focus:ring-[#4fb3d9]`}
         >
           <option value="">Select language</option>
           <option value="English">English</option>
@@ -498,7 +500,7 @@ const UserProfile: React.FC = () => {
       <button
         onClick={handleSaveProfile}
         disabled={saving}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 disabled:opacity-50"
+        className="px-4 py-2 bg-[#4fb3d9] hover:bg-[#3da3c9] text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
         {saving ? "Saving..." : "Save Changes"}
@@ -508,40 +510,40 @@ const UserProfile: React.FC = () => {
 
   const renderDataManagement = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
+      <h3 className={`text-lg font-semibold flex items-center gap-2 ${themeClasses.text.primary}`}>
         <Download className="h-5 w-5" />
         Data & Account Management
       </h3>
 
-      <div className="p-4 bg-gray-800 rounded-lg">
-        <h4 className="font-medium mb-2">Download Your Data</h4>
-        <p className="text-sm text-gray-400 mb-4">
+      <div className={`p-4 rounded-lg ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
+        <h4 className={`font-medium mb-2 ${themeClasses.text.primary}`}>Download Your Data</h4>
+        <p className={`text-sm mb-4 ${themeClasses.text.secondary}`}>
           Get a copy of your account data
         </p>
-        <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2">
+        <button className="px-4 py-2 bg-[#4fb3d9] hover:bg-[#3da3c9] text-white rounded-lg flex items-center gap-2">
           <Download className="h-4 w-4" />
           Download Data
         </button>
       </div>
 
-      <div className="p-4 bg-gray-800 rounded-lg">
-        <h4 className="font-medium mb-2">Clear History</h4>
-        <p className="text-sm text-gray-400 mb-4">
+      <div className={`p-4 rounded-lg ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
+        <h4 className={`font-medium mb-2 ${themeClasses.text.primary}`}>Clear History</h4>
+        <p className={`text-sm mb-4 ${themeClasses.text.secondary}`}>
           Remove your login and activity history
         </p>
-        <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">
+        <button className={`px-4 py-2 rounded-lg ${themeClasses.button.secondary}`}>
           Clear History
         </button>
       </div>
 
-      <div className="p-4 bg-red-900/20 border border-red-800 rounded-lg">
-        <h4 className="font-medium mb-2 text-red-400">Danger Zone</h4>
-        <p className="text-sm text-gray-400 mb-4">
+      <div className={`p-4 rounded-lg ${themeClasses.border.danger} border ${darkMode ? "bg-red-900/20" : "bg-red-50"}`}>
+        <h4 className={`font-medium mb-2 ${themeClasses.text.danger}`}>Danger Zone</h4>
+        <p className={`text-sm mb-4 ${themeClasses.text.secondary}`}>
           Once you delete your account, there is no going back. Please be certain.
         </p>
         <button
           onClick={handleDeleteAccount}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg flex items-center gap-2"
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2"
         >
           <Trash2 className="h-4 w-4" />
           Delete Account
@@ -552,13 +554,13 @@ const UserProfile: React.FC = () => {
 
   const renderSupport = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
+      <h3 className={`text-lg font-semibold flex items-center gap-2 ${themeClasses.text.primary}`}>
         <HelpCircle className="h-5 w-5" />
         Support & Help
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-between">
+        <button className={`p-4 rounded-lg flex items-center justify-between ${themeClasses.bg.card} ${themeClasses.border.default} border hover:${themeClasses.bg.hover}`}>
           <span className="flex items-center gap-2">
             <HelpCircle className="h-5 w-5" />
             Help Center
@@ -566,7 +568,7 @@ const UserProfile: React.FC = () => {
           <ChevronRight className="h-5 w-5" />
         </button>
 
-        <button className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-between">
+        <button className={`p-4 rounded-lg flex items-center justify-between ${themeClasses.bg.card} ${themeClasses.border.default} border hover:${themeClasses.bg.hover}`}>
           <span className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
             Report a Problem
@@ -574,7 +576,7 @@ const UserProfile: React.FC = () => {
           <ChevronRight className="h-5 w-5" />
         </button>
 
-        <button className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-between">
+        <button className={`p-4 rounded-lg flex items-center justify-between ${themeClasses.bg.card} ${themeClasses.border.default} border hover:${themeClasses.bg.hover}`}>
           <span className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
             Contact Support
@@ -582,7 +584,7 @@ const UserProfile: React.FC = () => {
           <ChevronRight className="h-5 w-5" />
         </button>
 
-        <button className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-between">
+        <button className={`p-4 rounded-lg flex items-center justify-between ${themeClasses.bg.card} ${themeClasses.border.default} border hover:${themeClasses.bg.hover}`}>
           <span className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Terms & Privacy
@@ -606,20 +608,20 @@ const UserProfile: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4fb3d9]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100">
+    <div className={`min-h-screen ${themeClasses.bg.main}`}>
       <div className="max-w-6xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+        <h1 className={`text-3xl font-bold mb-8 ${themeClasses.text.primary}`}>Your Profile</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-800 rounded-lg p-4 space-y-2 sticky top-6">
+            <div className={`rounded-lg p-4 space-y-2 sticky top-6 ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
               {sections.map((section) => {
                 const Icon = section.icon;
                 return (
@@ -628,8 +630,8 @@ const UserProfile: React.FC = () => {
                     onClick={() => setActiveSection(section.id)}
                     className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-colors ${
                       activeSection === section.id
-                        ? "bg-blue-600 text-white"
-                        : "hover:bg-gray-700"
+                        ? "bg-[#4fb3d9] text-white"
+                        : themeClasses.button.secondary
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -642,7 +644,7 @@ const UserProfile: React.FC = () => {
 
           {/* Content */}
           <div className="lg:col-span-3">
-            <div className="bg-gray-800 rounded-lg p-6">
+            <div className={`rounded-lg p-6 ${themeClasses.bg.card} ${themeClasses.border.default} border`}>
               {activeSection === "basic" && renderBasicInfo()}
               {activeSection === "contact" && renderContactInfo()}
               {activeSection === "personal" && renderPersonalDetails()}

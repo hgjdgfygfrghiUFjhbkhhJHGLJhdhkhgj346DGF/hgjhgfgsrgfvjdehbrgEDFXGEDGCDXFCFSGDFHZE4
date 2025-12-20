@@ -1,8 +1,12 @@
-import React, { useState } from "react";
-import { useTheme } from "../themes"; // Changed from getThemeClasses
+import React, { useState, useEffect } from "react";
+import { useTheme } from "../themes";
 
-const ManageConnections: React.FC = () => {
-  const { themeClasses } = useTheme(); // Changed this line
+interface ManageConnectionsProps {
+  onSettingsSaved?: () => void;
+}
+
+const ManageConnections: React.FC<ManageConnectionsProps> = ({ onSettingsSaved }) => {
+  const { themeClasses } = useTheme();
   
   const [uri, setUri] = useState("");
   const [username, setUsername] = useState("");
@@ -10,6 +14,32 @@ const ManageConnections: React.FC = () => {
   const [database, setDatabase] = useState("neo4j");
   const [isAuraDB, setIsAuraDB] = useState(false);
   const [uriError, setUriError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+
+  useEffect(() => {
+    loadNeo4jSettings();
+  }, []);
+
+  const loadNeo4jSettings = async () => {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.settings) {
+          setUri(data.settings.neo_4j_uri || "");
+          setUsername(data.settings.neo4j_username || "");
+          setPassword(data.settings.neo4j_password || "");
+          setDatabase(data.settings.neo4j_database || "neo4j");
+          setIsAuraDB(data.settings.neo4j_auradb || false);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load Neo4j settings:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const validateUri = (value: string) => {
     const uriPattern = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/.+/;
@@ -63,7 +93,7 @@ const ManageConnections: React.FC = () => {
     reader.readAsText(file);
   };
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     if (!validateUri(uri)) {
       return;
     }
@@ -71,9 +101,45 @@ const ManageConnections: React.FC = () => {
       alert("Please fill in all required fields");
       return;
     }
-    console.log("Connecting to Neo4j:", { uri, username, database, isAuraDB });
-    alert("Connection initiated!");
+
+    setConnecting(true);
+    try {
+      const res = await fetch("/api/settings/neo4j", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uri,
+          username,
+          password,
+          database,
+          isAuraDB
+        })
+      });
+
+      if (res.ok) {
+        alert("Neo4j connection settings saved successfully!");
+        if (onSettingsSaved) {
+          onSettingsSaved();
+        }
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to save Neo4j connection");
+      }
+    } catch (err) {
+      console.error("Failed to connect:", err);
+      alert("Failed to save Neo4j connection");
+    } finally {
+      setConnecting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4fb3d9]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-lg p-8 border w-full max-w-2xl mx-auto ${themeClasses.card}`}>
@@ -182,9 +248,10 @@ const ManageConnections: React.FC = () => {
         {/* Connect Button */}
         <button
           onClick={handleConnect}
-          className={`w-full font-medium py-2 px-4 rounded transition-colors ${themeClasses.button.primary}`}
+          disabled={connecting}
+          className={`w-full font-medium py-2 px-4 rounded transition-colors ${themeClasses.button.primary} disabled:opacity-50`}
         >
-          Connect to Neo4j
+          {connecting ? "Connecting..." : "Connect to Neo4j"}
         </button>
       </div>
     </div>
