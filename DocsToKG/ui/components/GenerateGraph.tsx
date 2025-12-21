@@ -8,6 +8,7 @@ import {
   FileText,
   Folder
 } from "lucide-react";
+import UnifiedUpload, { UnifiedUploadResult } from "./building_blocks_ui/UnifiedUpload";
 import { useTheme } from "./themes";
 
 const GenerateGraph: React.FC = () => {
@@ -15,6 +16,9 @@ const GenerateGraph: React.FC = () => {
   
   // Tab state for Generate Graph section
   const [activeTab, setActiveTab] = useState<"upload" | "data" | "graphs">("upload");
+  
+  // Run ID from upload
+  const [runId, setRunId] = useState<number | null>(null);
   
   // Data extraction state
   const [extractTasks, setExtractTasks] = useState({
@@ -46,80 +50,17 @@ const GenerateGraph: React.FC = () => {
   const [retryCondition, setRetryCondition] = useState("");
   const [additionalInstructions, setAdditionalInstructions] = useState("");
 
-  // Upload Files state
-  const [uploadType, setUploadType] = useState<"files" | "folder">("files");
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [selectedFolder, setSelectedFolder] = useState<FileList | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-
-  // Handle file upload functions
-  const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const fileArray = Array.from(files);
-      setSelectedFiles(fileArray);
+  // Unified upload callbacks
+  const handleUploadComplete = (result: UnifiedUploadResult) => {
+    // Store the run ID from upload
+    if (result.runId) {
+      setRunId(result.runId);
+      console.log("GenerateGraph: Stored run ID:", result.runId);
     }
   };
 
-  const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    setSelectedFolder(files);
-  };
-
-  const simulateUpload = () => {
-    if ((uploadType === "files" && selectedFiles.length === 0) || 
-        (uploadType === "folder" && !selectedFolder)) {
-      alert(`Please select ${uploadType === "files" ? "files" : "a folder"} to upload.`);
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-    
-    const totalItems = uploadType === "files" ? selectedFiles.length : (selectedFolder ? selectedFolder.length : 1);
-    let progress = 0;
-    
-    const interval = setInterval(() => {
-      progress += Math.random() * 20;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        setIsUploading(false);
-        
-        const itemCount = uploadType === "files" ? selectedFiles.length : (selectedFolder ? selectedFolder.length : 0);
-        alert(`Successfully uploaded ${itemCount} ${uploadType === "files" ? 'file(s)' : 'item(s) from folder'}!`);
-        
-        // Reset selections
-        setSelectedFiles([]);
-        setSelectedFolder(null);
-      }
-      setUploadProgress(progress);
-    }, 300);
-  };
-
-  const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const clearFolderSelection = () => {
-    setSelectedFolder(null);
-  };
-
-  // Helper component for file icons
-  const FileIcon = ({ fileName }: { fileName: string }) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    
-    return (
-      <div className={`w-8 h-8 rounded flex items-center justify-center ${themeClasses.bg.card}`}>
-        <span className="text-xs font-medium">
-          {ext === 'pdf' ? 'PDF' : 
-           ext === 'doc' || ext === 'docx' ? 'DOC' : 
-           ext === 'txt' ? 'TXT' : 
-           'FILE'}
-        </span>
-      </div>
-    );
+  const handleUploadError = (msg: string) => {
+    console.error("GenerateGraph upload error:", msg);
   };
 
   // Generate graph handlers
@@ -174,28 +115,57 @@ const GenerateGraph: React.FC = () => {
     setAllowedRelationships(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleRun = () => {
-    console.log("Running graph generation with settings:", {
-      extractTasks,
-      figureExtraction: extractTasks.figures ? {
-        scoreThreshold,
-        classificationThreshold,
-        figureLabels,
-        acceptedLabels
-      } : null,
-      lexicalGraph: {
-        separator,
-        chunkSize,
-        chunkOverlap
-      },
-      domainGraph: {
-        allowedNodes,
-        allowedRelationships,
-        retryCondition,
-        additionalInstructions
+  const handleRun = async () => {
+    if (!runId) {
+      alert("Please upload files first to create a run configuration.");
+      return;
+    }
+
+    try {
+      // Prepare run configuration
+      const runConfig = {
+        extract_metadata: extractTasks.metadata,
+        extract_text: extractTasks.text,
+        extract_figures: extractTasks.figures,
+        extract_tables: extractTasks.tables,
+        extract_formulas: extractTasks.formulas,
+        conf_fig_score_threshold: extractTasks.figures ? parseFloat(scoreThreshold.toString()) : null,
+        conf_fig_classif_threshold: extractTasks.figures ? parseFloat(classificationThreshold.toString()) : null,
+        conf_fig_labels: extractTasks.figures && figureLabels.length > 0 ? figureLabels.join(',') : null,
+        conf_fig_accepted_labels: extractTasks.figures && acceptedLabels.length > 0 ? acceptedLabels.join(',') : null,
+        graph_gen_conf_separator: separator || null,
+        graph_gen_conf_chunk_size: chunkSize ? parseInt(chunkSize, 10) : null,
+        graph_gen_conf_chunk_overlap: chunkOverlap ? parseInt(chunkOverlap, 10) : null,
+        graph_gen_conf_allowed_nodes: allowedNodes.length > 0 ? allowedNodes.join(',') : null,
+        graph_gen_conf_allowed_relationships: allowedRelationships.length > 0 ? allowedRelationships.join(',') : null,
+        graph_gen_conf_retry_condition: retryCondition || null,
+        graph_gen_conf_additional_instruction: additionalInstructions || null
+      };
+
+      console.log("Updating run configuration:", runConfig);
+
+      const response = await fetch(`/api/runs/${runId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify(runConfig)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update run configuration");
       }
-    });
-    alert("Graph generation started!");
+
+      const result = await response.json();
+      console.log("Run configuration updated:", result);
+      alert(`Graph generation started! Run ID: ${runId}`);
+      
+    } catch (error: any) {
+      console.error("Error updating run configuration:", error);
+      alert(`Error: ${error.message}`);
+    }
   };
 
   return (
@@ -234,207 +204,12 @@ const GenerateGraph: React.FC = () => {
             <h2 className={`text-lg font-semibold mb-6 ${themeClasses.text.primary}`}>
               Upload Files or Folder
             </h2>
-            
-            {/* Upload type selection */}
-            <div className="mb-8">
-              <label className={`block text-sm font-medium mb-3 ${themeClasses.text.secondary}`}>
-                Select upload type
-              </label>
-              <div className="flex gap-6">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="files"
-                    name="uploadType"
-                    checked={uploadType === "files"}
-                    onChange={() => setUploadType("files")}
-                    className={`w-4 h-4 ${themeClasses.radio}`}
-                  />
-                  <label htmlFor="files" className={`text-sm ${themeClasses.text.secondary}`}>
-                    Files
-                  </label>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="folder"
-                    name="uploadType"
-                    checked={uploadType === "folder"}
-                    onChange={() => setUploadType("folder")}
-                    className={`w-4 h-4 ${themeClasses.radio}`}
-                  />
-                  <label htmlFor="folder" className={`text-sm ${themeClasses.text.secondary}`}>
-                    Folder
-                  </label>
-                </div>
-              </div>
-            </div>
-            
-            {/* Upload fields */}
-            <div className="space-y-6">
-              {/* Files upload field */}
-              {uploadType === "files" ? (
-                <div>
-                  <label className={`block text-sm font-medium mb-3 ${themeClasses.text.secondary}`}>
-                    Select Files
-                  </label>
-                  <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${themeClasses.fileUpload}`}>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFilesChange}
-                      className="hidden"
-                      id="files-upload"
-                    />
-                    <label htmlFor="files-upload" className="cursor-pointer">
-                      <div className={`text-sm ${themeClasses.text.muted}`}>
-                        <p className="mb-2">Click to select files or drag and drop</p>
-                        <p className="text-xs">Supported formats: PDF, DOC, DOCX, TXT, etc.</p>
-                      </div>
-                    </label>
-                  </div>
-                  
-                  {/* Selected files preview */}
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-4">
-                      <h3 className={`text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
-                        Selected Files ({selectedFiles.length})
-                      </h3>
-                      <div className={`max-h-40 overflow-y-auto rounded border ${themeClasses.input}`}>
-                        {selectedFiles.map((file, index) => (
-                          <div
-                            key={index}
-                            className={`flex items-center justify-between p-3 border-b last:border-b-0 ${themeClasses.border.default}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileIcon fileName={file.name} />
-                              <div>
-                                <p className={`text-sm font-medium ${themeClasses.text.secondary}`}>
-                                  {file.name}
-                                </p>
-                                <p className={`text-xs ${themeClasses.text.muted}`}>
-                                  {(file.size / 1024).toFixed(2)} KB
-                                </p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => removeFile(index)}
-                              className={`p-1 rounded transition-colors ${
-                                themeClasses.button.danger.replace('bg-', 'text-').replace('hover:bg-', 'hover:bg-')
-                              }`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* Folder upload field */
-                <div>
-                  <label className={`block text-sm font-medium mb-3 ${themeClasses.text.secondary}`}>
-                    Select Folder
-                  </label>
-                  <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${themeClasses.fileUpload}`}>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFolderChange}
-                      className="hidden"
-                      id="folder-upload"
-                    />
-                    <label htmlFor="folder-upload" className="cursor-pointer">
-                      <div className={`text-sm ${themeClasses.text.muted}`}>
-                        <p className="mb-2">Click to select a folder</p>
-                        <p className="text-xs">All files in the folder will be uploaded</p>
-                      </div>
-                    </label>
-                  </div>
-                  
-                  {/* Selected folder preview */}
-                  {selectedFolder && selectedFolder.length > 0 && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className={`text-sm font-medium ${themeClasses.text.secondary}`}>
-                          Selected Folder ({selectedFolder.length} files)
-                        </h3>
-                        <button
-                          onClick={clearFolderSelection}
-                          className={`text-xs px-2 py-1 rounded transition-colors ${
-                            themeClasses.button.danger.replace('bg-', 'text-').replace('hover:bg-', 'hover:bg-')
-                          }`}
-                        >
-                          Clear
-                        </button>
-                      </div>
-                      <div className={`text-sm p-3 rounded border ${themeClasses.input} ${themeClasses.text.muted}`}>
-                        <p>Folder selected with {selectedFolder.length} files</p>
-                        <p className="text-xs mt-1">
-                          First file: {selectedFolder[0].name}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Upload progress bar */}
-              {isUploading && (
-                <div className="mt-6">
-                  <div className="flex justify-between mb-1">
-                    <span className={`text-sm font-medium ${themeClasses.text.secondary}`}>
-                      Uploading...
-                    </span>
-                    <span className={`text-sm font-medium ${themeClasses.text.secondary}`}>
-                      {Math.round(uploadProgress)}%
-                    </span>
-                  </div>
-                  <div className={`w-full h-2 rounded-full overflow-hidden ${
-                    themeClasses.slider
-                  }`}>
-                    <div
-                      className="h-full bg-[#4fb3d9] transition-all duration-300 ease-out"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                  <p className={`text-xs mt-1 ${themeClasses.text.muted}`}>
-                    {uploadType === "files" 
-                      ? `Uploading ${selectedFiles.length} file(s)...` 
-                      : `Uploading folder contents...`}
-                  </p>
-                </div>
-              )}
-              
-              {/* Upload button */}
-              <div className="flex justify-end pt-4">
-                <button
-                  onClick={simulateUpload}
-                  disabled={isUploading || (uploadType === "files" && selectedFiles.length === 0) || 
-                           (uploadType === "folder" && !selectedFolder)}
-                  className={`px-6 py-3 rounded font-medium transition-colors flex items-center gap-2 ${
-                    isUploading || (uploadType === "files" && selectedFiles.length === 0) || 
-                    (uploadType === "folder" && !selectedFolder)
-                      ? themeClasses.button.secondary + ' cursor-not-allowed'
-                      : themeClasses.button.primary
-                  }`}
-                >
-                  {isUploading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      Upload {uploadType === "files" ? "Files" : "Folder"}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+            {/* Unified Upload Component */}
+            <UnifiedUpload
+              initialMode="files"
+              onComplete={handleUploadComplete}
+              onError={handleUploadError}
+            />
           </div>
         </div>
       )}

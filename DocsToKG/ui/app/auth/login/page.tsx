@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Database } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refresh } = useAuth();
@@ -255,5 +255,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="w-full max-w-md mx-auto"><div className="bg-gray-800 rounded-2xl h-96"></div></div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

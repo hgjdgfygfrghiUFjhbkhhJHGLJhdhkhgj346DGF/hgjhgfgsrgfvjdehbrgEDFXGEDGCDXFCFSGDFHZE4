@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureSchema, getConnection } from "@/app/lib/db";
 import { createToken, setAuthCookie, verifyPassword } from "@/app/lib/auth";
+import { RowDataPacket } from "mysql2/promise";
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
 
     await ensureSchema();
     const pool = await getConnection();
-    const [rows] = await pool.query(
+    const [rows] = await pool.query<RowDataPacket[]>(
       "SELECT user_id, email, password, first_name, last_name, role, is_blocked FROM User WHERE email = ?",
       [email]
     );
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
     }
 
-    const valid = await verifyPassword(password, user.password);
+    const valid = await verifyPassword(password, user.password as string);
     if (!valid) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
     }

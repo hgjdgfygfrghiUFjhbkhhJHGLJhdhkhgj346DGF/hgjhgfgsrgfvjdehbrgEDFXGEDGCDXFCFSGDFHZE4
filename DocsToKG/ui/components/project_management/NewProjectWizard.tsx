@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "../themes";
 import { Project } from "./ProjectManagement";
+import UnifiedUpload, { UnifiedUploadResult } from "../building_blocks_ui/UnifiedUpload";
 
 interface NewProjectWizardProps {
   onBack: () => void;
@@ -61,17 +62,14 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({
     { number: 3, title: "Configuration", icon: Settings },
   ];
 
-  const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const fileArray = Array.from(files);
-      setProjectData(prev => ({ ...prev, selectedFiles: fileArray }));
-    }
+  const handleUploadComplete = (result: UnifiedUploadResult) => {
+    // Optionally store a summary in projectData for later steps
+    // Here we simply log; project creation can proceed after files are uploaded
+    console.log("NewProjectWizard upload complete:", result);
   };
 
-  const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    setProjectData(prev => ({ ...prev, selectedFolder: files }));
+  const handleUploadError = (msg: string) => {
+    console.error("NewProjectWizard upload error:", msg);
   };
 
   const handleProjectSelection = (projectId: string) => {
@@ -322,96 +320,14 @@ const NewProjectWizard: React.FC<NewProjectWizardProps> = ({
 
             {/* Initialization Content based on selection */}
             <div className="mt-6">
-              {/* Files Upload */}
+              {/* Files Upload via Unified Component */}
               {projectData.initializationType === "files" && (
-                <div>
-                  <label className={`block text-sm font-medium mb-3 ${themeClasses.text.secondary}`}>
-                    Select Files
-                  </label>
-                  <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${themeClasses.fileUpload}`}>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFilesChange}
-                      className="hidden"
-                      id="files-upload"
-                    />
-                    <label htmlFor="files-upload" className="cursor-pointer">
-                      <div className={`text-sm ${themeClasses.text.muted}`}>
-                        <p className="mb-2">Click to select files or drag and drop</p>
-                        <p className="text-xs">Supported formats: PDF, DOC, DOCX, TXT, etc.</p>
-                      </div>
-                    </label>
-                  </div>
-                  
-                  {projectData.selectedFiles.length > 0 && (
-                    <div className="mt-4">
-                      <h3 className={`text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
-                        Selected Files ({projectData.selectedFiles.length})
-                      </h3>
-                      <div className={`max-h-40 overflow-y-auto rounded border ${themeClasses.input}`}>
-                        {projectData.selectedFiles.map((file, index) => (
-                          <div
-                            key={index}
-                            className={`flex items-center p-3 border-b last:border-b-0 ${themeClasses.border.default}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileIcon fileName={file.name} />
-                              <div>
-                                <p className={`text-sm font-medium ${themeClasses.text.secondary}`}>
-                                  {file.name}
-                                </p>
-                                <p className={`text-xs ${themeClasses.text.muted}`}>
-                                  {(file.size / 1024).toFixed(2)} KB
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <UnifiedUpload initialMode="files" onComplete={handleUploadComplete} onError={handleUploadError} />
               )}
 
-              {/* Folder Upload */}
+              {/* Folder Upload via Unified Component */}
               {projectData.initializationType === "folder" && (
-                <div>
-                  <label className={`block text-sm font-medium mb-3 ${themeClasses.text.secondary}`}>
-                    Select Folder
-                  </label>
-                  <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${themeClasses.fileUpload}`}>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFolderChange}
-                      className="hidden"
-                      id="folder-upload"
-                    />
-                    <label htmlFor="folder-upload" className="cursor-pointer">
-                      <div className={`text-sm ${themeClasses.text.muted}`}>
-                        <p className="mb-2">Click to select a folder</p>
-                        <p className="text-xs">All files in the folder will be uploaded</p>
-                      </div>
-                    </label>
-                  </div>
-                  
-                  {projectData.selectedFolder && projectData.selectedFolder.length > 0 && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className={`text-sm font-medium ${themeClasses.text.secondary}`}>
-                          Selected Folder ({projectData.selectedFolder.length} files)
-                        </h3>
-                      </div>
-                      <div className={`text-sm p-3 rounded border ${themeClasses.input} ${themeClasses.text.muted}`}>
-                        <p>Folder selected with {projectData.selectedFolder.length} files</p>
-                        <p className="text-xs mt-1">
-                          First file: {projectData.selectedFolder[0].name}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <UnifiedUpload initialMode="folder" onComplete={handleUploadComplete} onError={handleUploadError} />
               )}
 
               {/* Existing Projects */}

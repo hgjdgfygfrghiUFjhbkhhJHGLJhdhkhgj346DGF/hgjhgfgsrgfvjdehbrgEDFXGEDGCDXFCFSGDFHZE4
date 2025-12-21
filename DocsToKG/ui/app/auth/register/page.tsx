@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -36,7 +36,7 @@ interface PasswordValidation {
   hasSpecialChar: boolean;
 }
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refresh } = useAuth();
@@ -471,5 +471,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="w-full max-w-2xl mx-auto"><div className="bg-gray-800 rounded-2xl h-96"></div></div>}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }

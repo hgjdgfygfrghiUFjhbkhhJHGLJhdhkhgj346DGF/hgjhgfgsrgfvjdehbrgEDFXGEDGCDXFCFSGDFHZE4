@@ -89,16 +89,40 @@ export async function ensureSchema(): Promise<void> {
       PRIMARY KEY (project_name, user_id),
       CONSTRAINT fk_project_user FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+    `CREATE TABLE IF NOT EXISTS Run (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      extract_metadata BOOLEAN DEFAULT FALSE,
+      extract_text BOOLEAN DEFAULT FALSE,
+      extract_figures BOOLEAN DEFAULT FALSE,
+      extract_tables BOOLEAN DEFAULT FALSE,
+      extract_formulas BOOLEAN DEFAULT FALSE,
+      conf_fig_score_threshold FLOAT,
+      conf_fig_classif_threshold FLOAT,
+      conf_fig_labels TEXT,
+      conf_fig_accepted_labels TEXT,
+      graph_gen_conf_separator VARCHAR(255),
+      graph_gen_conf_chunk_size INT,
+      graph_gen_conf_chunk_overlap INT,
+      graph_gen_conf_allowed_nodes TEXT,
+      graph_gen_conf_allowed_relationships TEXT,
+      graph_gen_conf_retry_condition TEXT,
+      graph_gen_conf_additional_instruction TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     `CREATE TABLE IF NOT EXISTS Document (
-      doc_id BIGINT AUTO_INCREMENT,
+      doc_id VARCHAR(64) NOT NULL,
       user_id BIGINT NOT NULL,
       project_name VARCHAR(255) NOT NULL,
-      path_name VARCHAR(1024) NOT NULL,
+      document_name VARCHAR(1024) NOT NULL,
+      id_run BIGINT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (doc_id, user_id, project_name),
       INDEX idx_document_project (project_name, user_id),
-      CONSTRAINT fk_document_project FOREIGN KEY (project_name, user_id) REFERENCES Project(project_name, user_id) ON DELETE CASCADE
+      INDEX idx_document_run (id_run),
+      CONSTRAINT fk_document_project FOREIGN KEY (project_name, user_id) REFERENCES Project(project_name, user_id) ON DELETE CASCADE,
+      CONSTRAINT fk_document_run FOREIGN KEY (id_run) REFERENCES Run(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     `CREATE TABLE IF NOT EXISTS Setting (
       user_id BIGINT NOT NULL,
@@ -174,6 +198,25 @@ export async function ensureSchema(): Promise<void> {
     }
   }
 
+  // Ensure id_run column exists in Document table (ignore if already present)
+  try {
+    await pool.query(`ALTER TABLE Document ADD COLUMN id_run BIGINT AFTER document_name`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
+
+  // Ensure foreign key constraint exists for id_run (ignore if already present)
+  try {
+    await pool.query(`ALTER TABLE Document ADD INDEX idx_document_run (id_run)`);
+    await pool.query(`ALTER TABLE Document ADD CONSTRAINT fk_document_run FOREIGN KEY (id_run) REFERENCES Run(id) ON DELETE SET NULL`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_KEYNAME") {
+      // Ignore duplicate key/constraint errors
+    }
+  }
+
   // Ensure is_connected exists on older databases (ignore if already present)
   try {
     await pool.query(`ALTER TABLE User ADD COLUMN is_connected TINYINT(1) DEFAULT 0 AFTER role`);
@@ -222,6 +265,23 @@ export async function ensureSchema(): Promise<void> {
     if (err?.code !== "ER_DUP_FIELDNAME") {
       console.warn('Could not add device column:', err?.message);
     }
+  }
+
+  // Rename path_name to document_name in Document table
+  try {
+    await pool.query(`ALTER TABLE Document CHANGE COLUMN path_name document_name VARCHAR(1024) NOT NULL`);
+  } catch (err: any) {
+    if (err?.code !== "ER_BAD_FIELD_ERROR") {
+      console.warn('Could not rename path_name to document_name:', err?.message);
+    }
+  }
+
+  // Change doc_id from BIGINT to VARCHAR(64) for hash storage
+  try {
+    // Drop auto_increment first
+    await pool.query(`ALTER TABLE Document MODIFY COLUMN doc_id VARCHAR(64) NOT NULL`);
+  } catch (err: any) {
+    console.warn('Could not modify doc_id column:', err?.message);
   }
 
   // Seed a unique admin account if it does not already exist
