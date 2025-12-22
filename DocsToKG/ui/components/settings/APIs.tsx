@@ -5,24 +5,18 @@ import { useTheme } from "../themes";
 interface APIsProps {
   llmGraphBuilderUrl: string;
   onLlmGraphBuilderUrlChange: (value: string) => void;
+  onSave: () => void;
 }
 
 const APIs: React.FC<APIsProps> = ({
   llmGraphBuilderUrl,
-  onLlmGraphBuilderUrlChange
+  onLlmGraphBuilderUrlChange,
+  onSave
 }) => {
   const { themeClasses } = useTheme();
 
   const handleSave = () => {
-    const apiSettings = {
-      llmGraphBuilderUrl
-    };
-    
-    console.log("Saving API settings:", apiSettings);
-    alert("API settings saved successfully!");
-    
-    // In a real app, you would save to localStorage, backend, etc.
-    // localStorage.setItem('apiSettings', JSON.stringify(apiSettings));
+    onSave();
   };
 
   return (

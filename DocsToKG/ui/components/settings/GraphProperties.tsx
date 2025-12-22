@@ -17,6 +17,7 @@ interface GraphPropertiesProps {
   onNewHierarchyLevelChange: (value: string) => void;
   onAddHierarchyLevel: () => void;
   onDeleteHierarchyLevel: (index: number) => void;
+  onSave: () => void;
 }
 
 const GraphProperties: React.FC<GraphPropertiesProps> = ({
@@ -27,21 +28,13 @@ const GraphProperties: React.FC<GraphPropertiesProps> = ({
   onHierarchyLevelsChange,
   onNewHierarchyLevelChange,
   onAddHierarchyLevel,
-  onDeleteHierarchyLevel
+  onDeleteHierarchyLevel,
+  onSave
 }) => {
   const { themeClasses } = useTheme();
 
   const handleSave = () => {
-    const graphPropertiesSettings = {
-      metaLabels,
-      hierarchyLevels
-    };
-    
-    console.log("Saving Graph Properties settings:", graphPropertiesSettings);
-    alert("Graph Properties settings saved successfully!");
-    
-    // In a real app, you would save to localStorage, backend, etc.
-    // localStorage.setItem('graphPropertiesSettings', JSON.stringify(graphPropertiesSettings));
+    onSave();
   };
 
   return (

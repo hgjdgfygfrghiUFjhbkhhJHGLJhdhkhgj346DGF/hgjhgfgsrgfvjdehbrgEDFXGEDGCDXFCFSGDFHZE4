@@ -140,6 +140,7 @@ const Settings: React.FC = () => {
       const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           storagePaths,
           llmProvider,
@@ -217,6 +218,7 @@ const Settings: React.FC = () => {
           <Storage
             storagePaths={storagePaths}
             onStoragePathChange={handleStoragePathChange}
+            onSave={handleSaveSettings}
           />
         );
 
@@ -233,6 +235,7 @@ const Settings: React.FC = () => {
             onEmbeddingModelChange={setEmbeddingModel}
             onEmbeddingDimensionsChange={setEmbeddingDimensions}
             onSimilarityMetricChange={setSimilarityMetric}
+            onSave={handleSaveSettings}
           />
         );
 
@@ -247,6 +250,7 @@ const Settings: React.FC = () => {
             onNewHierarchyLevelChange={setNewHierarchyLevel}
             onAddHierarchyLevel={handleAddHierarchyLevel}
             onDeleteHierarchyLevel={handleDeleteHierarchyLevel}
+            onSave={handleSaveSettings}
           />
         );
 
@@ -255,6 +259,7 @@ const Settings: React.FC = () => {
           <APIs
             llmGraphBuilderUrl={llmGraphBuilderUrl}
             onLlmGraphBuilderUrlChange={setLlmGraphBuilderUrl}
+            onSave={handleSaveSettings}
           />
         );
 

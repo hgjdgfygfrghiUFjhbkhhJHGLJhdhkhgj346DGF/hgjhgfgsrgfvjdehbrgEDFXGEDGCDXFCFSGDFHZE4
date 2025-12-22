@@ -14,17 +14,14 @@ interface StorageProps {
     shrinks: { path: string; prefix: string };
   };
   onStoragePathChange: (key: keyof StorageProps['storagePaths'], field: 'path' | 'prefix', value: string) => void;
+  onSave: () => void;
 }
 
-const Storage: React.FC<StorageProps> = ({ storagePaths, onStoragePathChange }) => {
+const Storage: React.FC<StorageProps> = ({ storagePaths, onStoragePathChange, onSave }) => {
   const { themeClasses } = useTheme();
 
   const handleSave = () => {
-    console.log("Saving storage settings:", storagePaths);
-    alert("Storage settings saved successfully!");
-    
-    // In a real app, you would save to localStorage, backend, etc.
-    // localStorage.setItem('storageSettings', JSON.stringify(storagePaths));
+    onSave();
   };
 
   return (

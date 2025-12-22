@@ -13,6 +13,7 @@ interface LLMGraphRAGProps {
   onEmbeddingModelChange: (value: string) => void;
   onEmbeddingDimensionsChange: (value: string) => void;
   onSimilarityMetricChange: (value: string) => void;
+  onSave: () => void;
 }
 
 const LLMGraphRAG: React.FC<LLMGraphRAGProps> = ({
@@ -25,24 +26,13 @@ const LLMGraphRAG: React.FC<LLMGraphRAGProps> = ({
   onModelNameChange,
   onEmbeddingModelChange,
   onEmbeddingDimensionsChange,
-  onSimilarityMetricChange
+  onSimilarityMetricChange,
+  onSave
 }) => {
   const { themeClasses } = useTheme();
 
   const handleSave = () => {
-    const llmGraphRAGSettings = {
-      llmProvider,
-      modelName,
-      embeddingModel,
-      embeddingDimensions,
-      similarityMetric
-    };
-    
-    console.log("Saving LLM & GraphRAG settings:", llmGraphRAGSettings);
-    alert("LLM & GraphRAG settings saved successfully!");
-    
-    // In a real app, you would save to localStorage, backend, etc.
-    // localStorage.setItem('llmGraphRAGSettings', JSON.stringify(llmGraphRAGSettings));
+    onSave();
   };
 
   return (
