@@ -69,17 +69,27 @@ def parse_args():
 def main():
     args = parse_args()
 
+    # Expand user (~) and resolve paths to absolute locations. Ensure output folders exist.
     output_structure = {
-        "metadata": str(Path(args.metadata_path).resolve()),
-        "text": str(Path(args.text_path).resolve()),
-        "formulas": str(Path(args.formulas_path).resolve()),
-        "figures": str(Path(args.figures_path).resolve()),
-        "hierarchy": str(Path(args.hierarchy_path).resolve()),
-        "shrinks": str(Path(args.shrinks_path).resolve()),
+        "metadata": str(Path(args.metadata_path).expanduser().resolve()),
+        "text": str(Path(args.text_path).expanduser().resolve()),
+        "formulas": str(Path(args.formulas_path).expanduser().resolve()),
+        "figures": str(Path(args.figures_path).expanduser().resolve()),
+        "hierarchy": str(Path(args.hierarchy_path).expanduser().resolve()),
+        "shrinks": str(Path(args.shrinks_path).expanduser().resolve()),
     }
 
+    # Create output directories if they don't exist
+    for p in output_structure.values():
+        Path(p).mkdir(parents=True, exist_ok=True)
+
+    folder_path = str(Path(args.folder_path).expanduser().resolve())
+    # Ensure input folder exists
+    if not Path(folder_path).exists():
+        raise SystemExit(f"Input folder does not exist: {folder_path}")
+
     dpex = DocProcExtractor(
-        folder_path=str(Path(args.folder_path).resolve()),
+        folder_path=folder_path,
         output_structure=output_structure,
         apply_pipeline=not args.no_pipeline,
         valid_tasks=args.valid_tasks,

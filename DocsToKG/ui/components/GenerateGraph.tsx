@@ -116,7 +116,23 @@ const GenerateGraph: React.FC = () => {
   };
 
   const handleRun = async () => {
-    if (!runId) {
+    // If no runId from upload, try to find latest pending run for the active project
+    let currentRunId = runId;
+    if (!currentRunId) {
+      try {
+        const latestRes = await fetch('/api/runs/latest', { credentials: 'include' });
+        if (latestRes.ok) {
+          const data = await latestRes.json();
+          currentRunId = data.id;
+          setRunId(currentRunId);
+          console.log('Found existing pending run:', currentRunId);
+        }
+      } catch (e) {
+        console.warn('No existing pending run found:', e);
+      }
+    }
+
+    if (!currentRunId) {
       alert("Please upload files first to create a run configuration.");
       return;
     }
@@ -144,7 +160,7 @@ const GenerateGraph: React.FC = () => {
 
       console.log("Updating run configuration:", runConfig);
 
-      const response = await fetch(`/api/runs/${runId}`, {
+      const response = await fetch(`/api/runs/${currentRunId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json"
@@ -160,7 +176,34 @@ const GenerateGraph: React.FC = () => {
 
       const result = await response.json();
       console.log("Run configuration updated:", result);
-      alert(`Graph generation started! Run ID: ${runId}`);
+        // After updating run configuration, trigger backend extraction
+        try {
+          const tasks: string[] = [];
+          if (extractTasks.metadata) tasks.push('metadata');
+          if (extractTasks.text) tasks.push('text');
+          if (extractTasks.figures) tasks.push('figures');
+          if (extractTasks.tables) tasks.push('tables');
+          if (extractTasks.formulas) tasks.push('formulas');
+
+          const execRes = await fetch(`/api/runs/${currentRunId}/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ validTasks: tasks, noPipeline: false })
+          });
+
+          if (!execRes.ok) {
+            const data = await execRes.json().catch(() => ({}));
+            throw new Error(data.message || 'Failed to start extraction');
+          }
+
+          const execData = await execRes.json();
+          console.log('Extraction started:', execData);
+          alert(`Graph generation started! Run ID: ${runId} (pid: ${execData.pid || 'n/a'})`);
+        } catch (execErr: any) {
+          console.error('Failed to start extraction:', execErr);
+          alert(`Run updated but failed to start extraction: ${execErr.message}`);
+        }
       
     } catch (error: any) {
       console.error("Error updating run configuration:", error);

@@ -31,11 +31,13 @@ export async function POST(req: NextRequest) {
         graph_gen_conf_allowed_nodes,
         graph_gen_conf_allowed_relationships,
         graph_gen_conf_retry_condition,
-        graph_gen_conf_additional_instruction
+        graph_gen_conf_additional_instruction,
+        is_executed
       ) VALUES (
         FALSE, FALSE, FALSE, FALSE, FALSE,
         NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+        FALSE
       )`
     );
 

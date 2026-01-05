@@ -107,6 +107,7 @@ export async function ensureSchema(): Promise<void> {
       graph_gen_conf_allowed_relationships TEXT,
       graph_gen_conf_retry_condition TEXT,
       graph_gen_conf_additional_instruction TEXT,
+      is_executed BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
@@ -232,6 +233,18 @@ export async function ensureSchema(): Promise<void> {
   } catch (err: any) {
     if (err?.code !== "ER_DUP_FIELDNAME") {
       throw err;
+    }
+  }
+
+  // Ensure is_executed exists on Run table (ignore if already present)
+  try {
+    await pool.query(`ALTER TABLE Run ADD COLUMN is_executed BOOLEAN DEFAULT FALSE`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_FIELDNAME") {
+      // Some MySQL versions return different codes; ignore if column exists
+      if (err?.errno !== 1060) {
+        throw err;
+      }
     }
   }
 

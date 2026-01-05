@@ -3,6 +3,9 @@ import { ensureSchema, getConnection } from "@/app/lib/db";
 import { getUserFromToken } from "@/app/lib/auth";
 import { RowDataPacket } from "mysql2/promise";
 import crypto from "crypto";
+import fs from "fs/promises";
+import path from "path";
+import os from "os";
 
 export async function POST(request: Request) {
   try {
@@ -81,26 +84,45 @@ export async function POST(request: Request) {
     const projectName = (projectRows[0] as any).project_name;
     console.log(`Upload: Found active project: ${projectName}`);
 
-    // Create a new Run record for this upload batch
+    // Fetch storage settings for the active project (raw documents path & prefix)
+    const [settingRows] = await pool.query<RowDataPacket[]>(
+      "SELECT raw_doc_path, raw_doc_prefix FROM Setting WHERE user_id = ? AND project_name = ?",
+      [user.user_id, projectName]
+    );
+
+    const configuredRawDocPath = (settingRows?.[0] as any)?.raw_doc_path || null;
+    const rawDocPrefix = (settingRows?.[0] as any)?.raw_doc_prefix || "raw";
+
+    // Expand tilde to home directory for file system compatibility
+    const rawDocPath = configuredRawDocPath
+      ? configuredRawDocPath.startsWith("~")
+        ? path.join(os.homedir(), configuredRawDocPath.slice(1))
+        : configuredRawDocPath
+      : null;
+
+    // Create a new Run record for this upload batch (not executed yet)
     const [runResult] = await pool.query<any>(
       `INSERT INTO Run (
         extract_metadata,
         extract_text,
         extract_figures,
         extract_tables,
-        extract_formulas
-      ) VALUES (FALSE, FALSE, FALSE, FALSE, FALSE)`
+        extract_formulas,
+        is_executed
+      ) VALUES (FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)`
     );
 
     const runId = runResult.insertId;
     console.log(`Upload: Created new Run with ID: ${runId}`);
 
-    const uploadedDocuments = [];
+    const uploadedDocuments: Array<{ docId: string; name: string; size: number; type: string; storedPath?: string | null }> = [];
     const skippedDocuments = [];
 
     // Process each valid file
     for (const file of validFiles) {
       try {
+        const safeFileName = path.basename(file.name);
+
         // Read file content as buffer
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
@@ -128,21 +150,35 @@ export async function POST(request: Request) {
         await pool.query(
           `INSERT INTO Document (doc_id, user_id, project_name, document_name, id_run) 
            VALUES (?, ?, ?, ?, ?)`,
-          [docId, user.user_id, projectName, file.name, runId]
+          [docId, user.user_id, projectName, safeFileName, runId]
         );
 
-        console.log(`Upload: Successfully inserted document ${docId} for file ${file.name}`);
+        console.log(`Upload: Successfully inserted document ${docId} for file ${safeFileName}`);
+
+        // Persist the file to local storage if a path is configured
+        let storedPath: string | null = null;
+        if (rawDocPath) {
+          try {
+            const targetDir = path.join(rawDocPath, String(runId));
+            await fs.mkdir(targetDir, { recursive: true });
+            const targetFileName = `${rawDocPrefix || "raw"}_${safeFileName}`;
+            storedPath = path.join(targetDir, targetFileName);
+            await fs.writeFile(storedPath, buffer);
+            console.log(`Upload: Stored file at ${storedPath}`);
+          } catch (storageErr) {
+            console.error(`Upload: Failed to store file ${safeFileName} to raw_doc_path`, storageErr);
+          }
+        } else {
+          console.warn("Upload: raw_doc_path is not configured; skipping file storage.");
+        }
 
         uploadedDocuments.push({
           docId,
-          name: file.name,
+          name: safeFileName,
           size: file.size,
-          type: file.type
+          type: file.type,
+          storedPath
         });
-
-        // TODO: Store the actual file content to storage
-        // This could be file system, S3, or other storage solution
-        // For now, we're just storing the metadata in the database
 
       } catch (err) {
         console.error(`Failed to process file ${file.name}:`, err);
