@@ -748,17 +748,17 @@ class Neo4jAPI:
 
 
 
-NEO4J_URI="neo4j+s://0e0b1a48.databases.neo4j.io"
-NEO4J_USERNAME="neo4j"
-NEO4J_PASSWORD="WwO7UslE8DzciMfGWIM4qkcp3scqb4j-ZtuGL_RMyo0"
-NEO4J_DATABASE="neo4j"
-AURA_INSTANCEID="0e0b1a48"
-AURA_INSTANCENAME="Instance03"
-instance = Neo4jAPI(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE, aura_ds=True)
+# NEO4J_URI="neo4j+s://0e0b1a48.databases.neo4j.io"
+# NEO4J_USERNAME="neo4j"
+# NEO4J_PASSWORD="WwO7UslE8DzciMfGWIM4qkcp3scqb4j-ZtuGL_RMyo0"
+# NEO4J_DATABASE="neo4j"
+# AURA_INSTANCEID="0e0b1a48"
+# AURA_INSTANCENAME="Instance03"
+# instance = Neo4jAPI(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE, aura_ds=True)
 
-instance.create_lexical_graph("../results/hierarchy/hierarchy_sample_1", 
-                              embedding_provider={"provider": "ollama", "model_name": "llama3.1:latest"}, 
-                              llm={"provider": "ollama", "model_name": "llama3.1:latest"})
+# instance.create_lexical_graph("../results/hierarchy/hierarchy_sample_1", 
+#                               embedding_provider={"provider": "ollama", "model_name": "llama3.1:latest"}, 
+#                               llm={"provider": "ollama", "model_name": "llama3.1:latest"})
 
 
 # instance.close()

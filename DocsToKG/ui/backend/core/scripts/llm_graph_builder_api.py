@@ -342,22 +342,22 @@ class LLMGraphBuilderAPI:
             }
 
 
-# Example usage
-if __name__ == "__main__":
-    url = "https://prodprocessing-backend-967196130891.us-central1.run.app"
-    file_path = "Neo4j-3e96bf6c-Created-2025-11-26.txt"
-    username = "neo4j"
-    password = "WwO7UslE8DzciMfGWIM4qkcp3scqb4j-ZtuGL_RMyo0"
-    database = "neo4j"
-    neo4j_uri = "neo4j+s://0e0b1a48.databases.neo4j.io"
+# # Example usage
+# if __name__ == "__main__":
+#     url = "https://prodprocessing-backend-967196130891.us-central1.run.app"
+#     file_path = "Neo4j-3e96bf6c-Created-2025-11-26.txt"
+#     username = "neo4j"
+#     password = "WwO7UslE8DzciMfGWIM4qkcp3scqb4j-ZtuGL_RMyo0"
+#     database = "neo4j"
+#     neo4j_uri = "neo4j+s://0e0b1a48.databases.neo4j.io"
 
-    llm_graph_builder = LLMGraphBuilderAPI(
-        username=username,
-        password=password,
-        database=database,
-        url=url,
-        neo4j_uri=neo4j_uri
-    )
+#     llm_graph_builder = LLMGraphBuilderAPI(
+#         username=username,
+#         password=password,
+#         database=database,
+#         url=url,
+#         neo4j_uri=neo4j_uri
+    # )
     
     # Example 1: No restrictions (let the LLM decide)
     # response = llm_graph_builder.generate_graph("chunk_12.txt")
@@ -455,12 +455,12 @@ Ensure all extracted entities and relationships meet these quality standards:
 Process the input text through this comprehensive semantic analysis framework to construct a complete representation of the conceptual landscape, focusing exclusively on meaningful entities and their authentic relationships while systematically excluding all presentational and structural artifacts.
     """
     
-    response = llm_graph_builder.generate_graph(
-        "chunk_12.txt",
-        tmp_results="~/.luminah/tmp_nodes.pkl",
-        allowed_nodes=allowed_nodes,
-        allowed_relationship=allowed_relationship,
-        additional_instructions=additional_instructions
-    )
+    # response = llm_graph_builder.generate_graph(
+    #     "chunk_12.txt",
+    #     tmp_results="~/.luminah/tmp_nodes.pkl",
+    #     allowed_nodes=allowed_nodes,
+    #     allowed_relationship=allowed_relationship,
+    #     additional_instructions=additional_instructions
+    # )
     # response = llm_graph_builder.graph_post_process(["materialize_text_chunk_similarities","enable_hybrid_search_and_fulltext_search_in_bloom","materialize_entity_similarities"])
     # print(response)
