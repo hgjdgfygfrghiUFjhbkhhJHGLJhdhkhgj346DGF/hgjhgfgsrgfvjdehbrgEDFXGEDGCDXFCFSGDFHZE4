@@ -4,12 +4,14 @@ import { useTheme } from "../themes";
 
 interface LLMGraphRAGProps {
   llmProvider: string;
-  modelName: string;
+  llmName: string;
+  embeddingProvider: string;
   embeddingModel: string;
   embeddingDimensions: string;
   similarityMetric: string;
   onLlmProviderChange: (value: string) => void;
-  onModelNameChange: (value: string) => void;
+  onLlmNameChange: (value: string) => void;
+  onEmbeddingProviderChange: (value: string) => void;
   onEmbeddingModelChange: (value: string) => void;
   onEmbeddingDimensionsChange: (value: string) => void;
   onSimilarityMetricChange: (value: string) => void;
@@ -18,12 +20,14 @@ interface LLMGraphRAGProps {
 
 const LLMGraphRAG: React.FC<LLMGraphRAGProps> = ({
   llmProvider,
-  modelName,
+  llmName,
+  embeddingProvider,
   embeddingModel,
   embeddingDimensions,
   similarityMetric,
   onLlmProviderChange,
-  onModelNameChange,
+  onLlmNameChange,
+  onEmbeddingProviderChange,
   onEmbeddingModelChange,
   onEmbeddingDimensionsChange,
   onSimilarityMetricChange,
@@ -57,12 +61,12 @@ const LLMGraphRAG: React.FC<LLMGraphRAGProps> = ({
             </div>
             <div>
               <label className={`block text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
-                Model name
+                LLM
               </label>
               <input
                 type="text"
-                value={modelName}
-                onChange={(e) => onModelNameChange(e.target.value)}
+                value={llmName}
+                onChange={(e) => onLlmNameChange(e.target.value)}
                 className={`w-full px-3 py-2 rounded border outline-none transition-colors ${themeClasses.input}`}
               />
             </div>
@@ -75,6 +79,17 @@ const LLMGraphRAG: React.FC<LLMGraphRAGProps> = ({
             Embedding settings
           </h3>
           <div className="space-y-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
+                Embedding provider
+              </label>
+              <input
+                type="text"
+                value={embeddingProvider}
+                onChange={(e) => onEmbeddingProviderChange(e.target.value)}
+                className={`w-full px-3 py-2 rounded border outline-none transition-colors ${themeClasses.input}`}
+              />
+            </div>
             <div>
               <label className={`block text-sm font-medium mb-2 ${themeClasses.text.secondary}`}>
                 Embedding model

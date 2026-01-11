@@ -124,6 +124,7 @@ class LLMGraphBuilderAPI:
         retry_condition=None,
         additional_instructions=None,
         source_type="local file",
+        meta_label="DomainGraph"
     ):
         """
         Generate a semantic graph from a document using LLM Graph Builder.
@@ -220,10 +221,10 @@ class LLMGraphBuilderAPI:
                 self.neo4j_api.execute_query(query, ids=list(new_element_ids))
 
                 # Prepare the query to add a label
-                query = """
+                query = f"""
                 MATCH (n)
                 WHERE elementId(n) IN $ids AND NOT n:Document
-                SET n:DomainGraph
+                SET n:{meta_label}
                 RETURN count(n) AS updatedCount;
                 """
 
@@ -238,8 +239,8 @@ class LLMGraphBuilderAPI:
                 """
                 chunks = self.neo4j_api.execute_query(query)[0]
 
-                query = """
-                MATCH (n:DomainGraph)
+                query = f"""
+                MATCH (n:{meta_label})
                 WHERE elementId(n) IN $ids
                 RETURN n;
                 """

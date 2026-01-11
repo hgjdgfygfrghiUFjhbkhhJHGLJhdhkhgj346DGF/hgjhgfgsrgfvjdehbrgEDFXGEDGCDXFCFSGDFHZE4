@@ -33,7 +33,8 @@ const Settings: React.FC = () => {
   
   // LLM & GraphRAG state
   const [llmProvider, setLlmProvider] = useState("");
-  const [modelName, setModelName] = useState("");
+  const [llmName, setLlmName] = useState("");
+  const [embeddingProvider, setEmbeddingProvider] = useState("");
   const [embeddingModel, setEmbeddingModel] = useState("");
   const [embeddingDimensions, setEmbeddingDimensions] = useState("");
   const [similarityMetric, setSimilarityMetric] = useState("");
@@ -101,7 +102,8 @@ const Settings: React.FC = () => {
 
           // Load LLM & GraphRAG settings
           setLlmProvider(data.settings.llm_provider || "");
-          setModelName(data.settings.model || "");
+          setLlmName(data.settings.llm || "");
+          setEmbeddingProvider(data.settings.embedding_provider || "");
           setEmbeddingModel(data.settings.embedding_model || "");
           setEmbeddingDimensions(data.settings.dimensions?.toString() || "");
           setSimilarityMetric(data.settings.similarity_metric || "");
@@ -144,7 +146,8 @@ const Settings: React.FC = () => {
         body: JSON.stringify({
           storagePaths,
           llmProvider,
-          modelName,
+          llmName,
+          embeddingProvider,
           embeddingModel,
           embeddingDimensions,
           similarityMetric,
@@ -226,12 +229,14 @@ const Settings: React.FC = () => {
         return (
           <LLMGraphRAG
             llmProvider={llmProvider}
-            modelName={modelName}
+            llmName={llmName}
+            embeddingProvider={embeddingProvider}
             embeddingModel={embeddingModel}
             embeddingDimensions={embeddingDimensions}
             similarityMetric={similarityMetric}
             onLlmProviderChange={setLlmProvider}
-            onModelNameChange={setModelName}
+            onLlmNameChange={setLlmName}
+            onEmbeddingProviderChange={setEmbeddingProvider}
             onEmbeddingModelChange={setEmbeddingModel}
             onEmbeddingDimensionsChange={setEmbeddingDimensions}
             onSimilarityMetricChange={setSimilarityMetric}

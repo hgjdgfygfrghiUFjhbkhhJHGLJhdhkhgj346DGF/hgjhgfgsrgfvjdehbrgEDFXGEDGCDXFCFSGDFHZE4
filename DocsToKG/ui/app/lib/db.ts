@@ -150,7 +150,8 @@ export async function ensureSchema(): Promise<void> {
       shrinks_doc_path VARCHAR(1024),
       shrinks_doc_prefix VARCHAR(255),
       llm_provider VARCHAR(255),
-      model VARCHAR(255),
+      llm VARCHAR(255),
+      embedding_provider VARCHAR(255),
       embedding_model VARCHAR(255),
       dimensions INT,
       similarity_metric VARCHAR(255),
@@ -289,6 +290,31 @@ export async function ensureSchema(): Promise<void> {
         // Column likely already exists
       }
     }
+  }
+
+  // Ensure llm column exists on Setting table
+  try {
+    await pool.query(`ALTER TABLE Setting ADD COLUMN llm VARCHAR(255)`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_FIELDNAME" && err?.errno !== 1060) {
+      throw err;
+    }
+  }
+
+  // Ensure embedding_provider column exists on Setting table
+  try {
+    await pool.query(`ALTER TABLE Setting ADD COLUMN embedding_provider VARCHAR(255)`);
+  } catch (err: any) {
+    if (err?.code !== "ER_DUP_FIELDNAME" && err?.errno !== 1060) {
+      throw err;
+    }
+  }
+
+  // Migrate existing model values into llm when available
+  try {
+    await pool.query(`UPDATE Setting SET llm = model WHERE llm IS NULL AND model IS NOT NULL`);
+  } catch (err: any) {
+    // Ignore if model column does not exist or other benign errors
   }
 
   // Ensure new profile fields exist on older databases

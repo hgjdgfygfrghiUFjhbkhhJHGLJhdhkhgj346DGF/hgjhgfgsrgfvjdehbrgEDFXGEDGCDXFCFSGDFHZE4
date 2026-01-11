@@ -100,7 +100,8 @@ export async function POST(request: Request) {
       shrinks_doc_prefix: body.storagePaths?.shrinks?.prefix || null,
       // LLM & GraphRAG
       llm_provider: body.llmProvider || null,
-      model: body.modelName || null,
+      llm: body.llmName || null,
+      embedding_provider: body.embeddingProvider || null,
       embedding_model: body.embeddingModel || null,
       dimensions: body.embeddingDimensions ? parseInt(body.embeddingDimensions) : null,
       similarity_metric: body.similarityMetric || null,

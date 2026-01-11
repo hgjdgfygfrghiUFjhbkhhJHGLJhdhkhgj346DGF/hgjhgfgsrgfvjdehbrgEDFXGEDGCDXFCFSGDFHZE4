@@ -44,7 +44,8 @@ class Setting:
     
     # LLM & Embeddings configuration
     llm_provider: Optional[str] = None
-    model: Optional[str] = None
+    llm: Optional[str] = None
+    embedding_provider: Optional[str] = None
     embedding_model: Optional[str] = None
     dimensions: Optional[int] = None
     similarity_metric: Optional[str] = None
@@ -101,7 +102,8 @@ class Setting:
             'shrinks_doc_path': self.shrinks_doc_path,
             'shrinks_doc_prefix': self.shrinks_doc_prefix,
             'llm_provider': self.llm_provider,
-            'model': self.model,
+            'llm': self.llm,
+            'embedding_provider': self.embedding_provider,
             'embedding_model': self.embedding_model,
             'dimensions': self.dimensions,
             'similarity_metric': self.similarity_metric,
@@ -158,7 +160,8 @@ class Setting:
             shrinks_doc_path=data.get('shrinks_doc_path'),
             shrinks_doc_prefix=data.get('shrinks_doc_prefix'),
             llm_provider=data.get('llm_provider'),
-            model=data.get('model'),
+            llm=data.get('llm') or data.get('model'),
+            embedding_provider=data.get('embedding_provider'),
             embedding_model=data.get('embedding_model'),
             dimensions=data.get('dimensions'),
             similarity_metric=data.get('similarity_metric'),
