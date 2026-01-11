@@ -96,7 +96,7 @@ class DocProcExtractor:
         """
         Run Nougat OCR/Math extraction.
         Converts images to temporary PDFs automatically.
-        The extracted text is saved as <output_base_path>/<basename>.mmd
+        The extracted text is saved as <output_base_path>/<basename>.txt
         """
 
         output_base_path = os.path.join(
@@ -152,7 +152,7 @@ class DocProcExtractor:
             if files_inside:
                 file_inside = files_inside[0]
                 src_file = os.path.join(output_base_path, file_inside)
-                final_file = f"{output_base_path}.mmd"
+                final_file = f"{output_base_path}.txt"
                 shutil.move(src_file, final_file)
                 os.rmdir(output_base_path)
                 print(f"[INFO] File created at: {final_file}")
@@ -172,11 +172,11 @@ class DocProcExtractor:
             output_path (str): Path to the root output directory.
         """
         output_path = os.path.join(output_path, f"hierarchy_{os.path.basename(input_path).split(".")[0]}")
-        if not os.path.exists(os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.mmd")):
-            self.extract_text(input_path, os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.mmd"))
+        if not os.path.exists(os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.txt")):
+            self.extract_text(input_path, os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.txt"))
 
         # Read the file content
-        input_path = os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.mmd")
+        input_path = os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.txt")
         result = from_path(input_path).best()
         text = str(result)
         lines = text.splitlines(True)
@@ -506,7 +506,7 @@ class DocProcExtractor:
 
         base_name = os.path.splitext(os.path.basename(input_file))[0]
 
-        input_file = os.path.join(self.output_structure["text"], f"text_{base_name}.mmd")
+        input_file = os.path.join(self.output_structure["text"], f"text_{base_name}.txt")
         output_folder = os.path.join(self.output_structure["shrinks"], f"shrinks_{base_name}")
 
         if not os.path.exists(input_file):

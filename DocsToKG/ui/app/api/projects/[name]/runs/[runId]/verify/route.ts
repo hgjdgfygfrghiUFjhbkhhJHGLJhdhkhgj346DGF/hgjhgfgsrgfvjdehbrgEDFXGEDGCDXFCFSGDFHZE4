@@ -93,7 +93,7 @@ export async function POST(
       if (settings.text_doc_path && settings.text_doc_prefix) {
         const textPath = expandPath(settings.text_doc_path);
         if (textPath && fs.existsSync(textPath)) {
-          const expectedFile = path.join(textPath, `${settings.text_doc_prefix}_raw_${fileName}.mmd`);
+          const expectedFile = path.join(textPath, `${settings.text_doc_prefix}_raw_${fileName}.txt`);
           extractionStatus.text_extracted = fs.existsSync(expectedFile);
         }
       }

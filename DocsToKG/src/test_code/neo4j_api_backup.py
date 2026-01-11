@@ -456,7 +456,7 @@ class Neo4jAPI:
                                llm:Dict = None,
                                vector_dim=1536, 
                                vector_sim_func = "cosine"):
-        loader = DirectoryLoader(folder_path, glob="**/*.mmd")
+        loader = DirectoryLoader(folder_path, glob="**/*.txt")
         docs = loader.load()
         text_splitter = CharacterTextSplitter(
             separator=separator,

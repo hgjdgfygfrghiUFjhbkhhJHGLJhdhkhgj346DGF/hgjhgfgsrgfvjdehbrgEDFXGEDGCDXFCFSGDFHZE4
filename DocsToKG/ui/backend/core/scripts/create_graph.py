@@ -105,7 +105,7 @@ def main():
         separator=args.separator,
         chunk_size=args.chunk_size,
         chunk_overlap=args.chunk_overlap,
-        vector_dimensions=args.vector_dim,
+        vector_dim=args.vector_dim,
         level_labels=args.level_labels,
         meta_label=args.lexical_meta_label
     )

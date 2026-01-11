@@ -7,7 +7,7 @@ from utils import extract_formulas
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python extract_formulas.py <input.mmd> <output.csv>")
+        print("Usage: python extract_formulas.py <input.txt> <output.csv>")
         sys.exit(1)
 
     mmd_file = sys.argv[1]

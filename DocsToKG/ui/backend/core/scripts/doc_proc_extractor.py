@@ -205,8 +205,8 @@ class DocProcExtractor:
                 return exists
             
             elif task == "text":
-                # Check for text_{filename}.mmd
-                expected_file = os.path.join(output_path, f"text_{filename_no_ext}.mmd")
+                # Check for text_{filename}.txt
+                expected_file = os.path.join(output_path, f"text_{filename_no_ext}.txt")
                 exists = os.path.isfile(expected_file)
                 print(f"[DEBUG] Checking text: {expected_file} → {'✓ exists' if exists else '✗ missing'}")
                 return exists
@@ -304,7 +304,7 @@ class DocProcExtractor:
         """
         Run Nougat OCR/Math extraction.
         Converts images to temporary PDFs automatically.
-        The extracted text is saved as <output_base_path>/<basename>.mmd
+        The extracted text is saved as <output_base_path>/<basename>.txt
         """
 
         output_base_path = os.path.join(
@@ -357,11 +357,22 @@ class DocProcExtractor:
         # Handle Nougat output
         if os.path.isdir(output_base_path):
             files_inside = os.listdir(output_base_path)
-            if files_inside:
-                file_inside = files_inside[0]
+            # Filter to only get files (no directories)
+            files_only = [f for f in files_inside if os.path.isfile(os.path.join(output_base_path, f))]
+            
+            if files_only:
+                file_inside = files_only[0]
                 src_file = os.path.join(output_base_path, file_inside)
-                final_file = f"{output_base_path}.mmd"
+                final_file = f"{output_base_path}.txt"
                 shutil.move(src_file, final_file)
+                # Clean up any remaining directories before removing the folder
+                try:
+                    for item in os.listdir(output_base_path):
+                        item_path = os.path.join(output_base_path, item)
+                        if os.path.isdir(item_path):
+                            shutil.rmtree(item_path)
+                except Exception as e:
+                    print(f"[WARNING] Failed to clean subdirectories: {e}")
                 os.rmdir(output_base_path)
                 print(f"[INFO] File created at: {final_file}")
             else:
@@ -380,11 +391,11 @@ class DocProcExtractor:
             output_path (str): Path to the root output directory.
         """
         output_path = os.path.join(output_path, f"hierarchy_{os.path.basename(input_path).split(".")[0]}")
-        if not os.path.exists(os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.mmd")):
-            self.extract_text(input_path, os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.mmd"))
+        if not os.path.exists(os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.txt")):
+            self.extract_text(input_path, os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.txt"))
 
         # Read the file content
-        input_path = os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.mmd")
+        input_path = os.path.join(self.output_structure["text"], f"text_{os.path.basename(input_path).split(".")[0]}.txt")
         result = from_path(input_path).best()
         text = str(result)
         lines = text.splitlines(True)
@@ -714,7 +725,7 @@ class DocProcExtractor:
 
         base_name = os.path.splitext(os.path.basename(input_file))[0]
 
-        input_file = os.path.join(self.output_structure["text"], f"text_{base_name}.mmd")
+        input_file = os.path.join(self.output_structure["text"], f"text_{base_name}.txt")
         output_folder = os.path.join(self.output_structure["shrinks"], f"shrinks_{base_name}")
 
         if not os.path.exists(input_file):
@@ -750,6 +761,22 @@ class DocProcExtractor:
 
         return len(chunks)
 
+    def _cleanup_directories_from_text_output(self, text_output_path: str):
+        """
+        Ensure that only files exist in the text output directory.
+        Remove any subdirectories that may have been created.
+        """
+        if not os.path.isdir(text_output_path):
+            return
+
+        try:
+            for item in os.listdir(text_output_path):
+                item_path = os.path.join(text_output_path, item)
+                if os.path.isdir(item_path):
+                    print(f"[CLEANUP] Removing unexpected directory in text output: {item_path}")
+                    shutil.rmtree(item_path)
+        except Exception as e:
+            print(f"[WARNING] Failed to cleanup directories from text output: {e}")
 
     def extract_data(self, task: str):
         """Dispatch task-specific extraction."""
@@ -767,6 +794,7 @@ class DocProcExtractor:
                 "extension": "",
                 "function": self.extract_text,
                 "kwargs": {},
+                "post_cleanup": True,
             },
             "figures": {
                 "output": "figures",
@@ -835,6 +863,10 @@ class DocProcExtractor:
             # Update progress after each file
             processed += 1
             self._update_progress(task, processed, total_files)
+
+        # Post-extraction cleanup for text task: ensure only files, no directories
+        if task == "text" and match_task[task].get("post_cleanup", False):
+            self._cleanup_directories_from_text_output(self.output_structure["text"])
 
     # -------------------- Main Pipeline --------------------
 
