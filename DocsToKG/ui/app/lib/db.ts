@@ -108,6 +108,11 @@ export async function ensureSchema(): Promise<void> {
       graph_gen_conf_retry_condition TEXT,
       graph_gen_conf_additional_instruction TEXT,
       is_executed BOOLEAN DEFAULT FALSE,
+      extract_text_state FLOAT DEFAULT 0,
+      extract_figures_state FLOAT DEFAULT 0,
+      extract_formulas_state FLOAT DEFAULT 0,
+      extract_metadata_state FLOAT DEFAULT 0,
+      extract_tables_state FLOAT DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
@@ -244,6 +249,44 @@ export async function ensureSchema(): Promise<void> {
       // Some MySQL versions return different codes; ignore if column exists
       if (err?.errno !== 1060) {
         throw err;
+      }
+    }
+  }
+
+  // Ensure extraction state columns exist on Run table (ignore if already present)
+  const extractionStateColumns = [
+    'extract_text_state',
+    'extract_figures_state',
+    'extract_formulas_state',
+    'extract_metadata_state',
+    'extract_tables_state'
+  ];
+  
+  for (const col of extractionStateColumns) {
+    try {
+      await pool.query(`ALTER TABLE Run ADD COLUMN ${col} FLOAT DEFAULT 0`);
+    } catch (err: any) {
+      if (err?.code !== "ER_DUP_FIELDNAME" && err?.errno !== 1060) {
+        throw err;
+      }
+    }
+  }
+
+  // Ensure extraction status columns exist on Document table (ignore if already present)
+  const documentExtractionColumns = [
+    'text_extracted',
+    'figures_extracted',
+    'metadata_extracted',
+    'tables_extracted',
+    'formulas_extracted'
+  ];
+  
+  for (const col of documentExtractionColumns) {
+    try {
+      await pool.query(`ALTER TABLE Document ADD COLUMN ${col} BOOLEAN DEFAULT FALSE`);
+    } catch (err: any) {
+      if (err?.code !== "ER_DUP_FIELDNAME" && err?.errno !== 1060) {
+        // Column likely already exists
       }
     }
   }

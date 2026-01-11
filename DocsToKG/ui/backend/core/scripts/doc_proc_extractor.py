@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import sys
 import re
 from charset_normalizer import from_path
+import mysql.connector
 
 
 class DocProcExtractor:
@@ -25,6 +26,7 @@ class DocProcExtractor:
         output_structure: Optional[dict] = None,
         apply_pipeline: bool = True,
         valid_tasks: Optional[list[str]] = None,
+        run_id: Optional[int] = None,
     ):
         # --- Handle defaults safely
         if output_structure is None:
@@ -50,6 +52,12 @@ class DocProcExtractor:
         }
         self.apply_pipeline = apply_pipeline
         self.valid_tasks = valid_tasks
+        self.run_id = run_id
+        self.db_connection = None
+
+        # Initialize database connection if run_id is provided
+        if self.run_id:
+            self._init_db_connection()
 
         # List files in folder
         self.files = [
@@ -61,6 +69,206 @@ class DocProcExtractor:
 
         if self.apply_pipeline:
             self.pipeline()
+
+    def _init_db_connection(self):
+        """Initialize database connection for progress tracking."""
+        try:
+            db_config = {
+                'host': os.getenv('DB_HOST', 'localhost'),
+                'port': int(os.getenv('DB_PORT', '3308')),
+                'user': os.getenv('DB_USER', 'admin'),
+                'password': os.getenv('DB_PASSWORD', 'admin'),
+                'database': os.getenv('DB_NAME', 'docs_to_kg')
+            }
+            self.db_connection = mysql.connector.connect(**db_config)
+            
+            # Test the connection
+            cursor = self.db_connection.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            cursor.close()
+            
+            print(f"[INFO] ✓ Database connection established for run_id={self.run_id}")
+            print(f"[INFO] Connected to {db_config['host']}:{db_config['port']}/{db_config['database']}")
+        except Exception as e:
+            print(f"[ERROR] Failed to connect to database: {e}")
+            print(f"[DEBUG] DB_HOST={os.getenv('DB_HOST')}, DB_PORT={os.getenv('DB_PORT')}, DB_NAME={os.getenv('DB_NAME')}, DB_USER={os.getenv('DB_USER')}")
+            self.db_connection = None
+            import traceback
+            traceback.print_exc()
+
+    def _update_progress(self, task: str, processed: int, total: int):
+        """Update progress in database for a specific task."""
+        if not self.db_connection or not self.run_id:
+            return
+
+        try:
+            # Map task names to database column names
+            task_column_map = {
+                "metadata": "extract_metadata_state",
+                "text": "extract_text_state",
+                "figures": "extract_figures_state",
+                "tables": "extract_tables_state",
+                "formulas": "extract_formulas_state",
+            }
+
+            if task not in task_column_map:
+                return
+
+            column = task_column_map[task]
+            percentage = (processed / total * 100) if total > 0 else 0
+
+            cursor = self.db_connection.cursor()
+            query = f"UPDATE Run SET {column} = %s WHERE id = %s"
+            cursor.execute(query, (percentage, self.run_id))
+            self.db_connection.commit()
+            cursor.close()
+
+            print(f"[PROGRESS] {task}: {processed}/{total} ({percentage:.1f}%)")
+        except Exception as e:
+            print(f"[WARNING] Failed to update progress for {task}: {e}")
+
+    def _mark_document_extracted(self, filename: str, task: str):
+        """Mark a document as extracted for a specific task in the database."""
+        if not self.db_connection:
+            print(f"[WARNING] No database connection, cannot mark {filename} as {task} extracted")
+            return
+            
+        if not self.run_id:
+            print(f"[WARNING] No run_id, cannot mark {filename} as {task} extracted")
+            return
+
+        try:
+            # Map task names to database column names
+            task_column_map = {
+                "metadata": "metadata_extracted",
+                "text": "text_extracted",
+                "figures": "figures_extracted",
+                "tables": "tables_extracted",
+                "hierarchy": "tables_extracted",  # hierarchy is stored as tables
+                "formulas": "formulas_extracted",
+                "shrinks": None  # shrinks don't have a dedicated column
+            }
+
+            if task not in task_column_map:
+                print(f"[WARNING] Unknown task '{task}', cannot mark as extracted")
+                return
+                
+            column = task_column_map[task]
+            if column is None:
+                print(f"[INFO] Task '{task}' does not have extraction tracking")
+                return
+            
+            # Check if extraction actually produced files before marking
+            if not self._verify_extraction_output(filename, task):
+                print(f"[WARNING] No output files found for {filename} ({task}), not marking as extracted")
+                return
+            
+            # Query to find document by name and run_id
+            cursor = self.db_connection.cursor()
+            update_query = f"""
+                UPDATE Document 
+                SET {column} = TRUE 
+                WHERE id_run = %s AND document_name = %s
+            """
+            
+            print(f"[DEBUG] Updating {filename} for run_id={self.run_id}, column={column}")
+            cursor.execute(update_query, (self.run_id, filename))
+            affected_rows = cursor.rowcount
+            self.db_connection.commit()
+            cursor.close()
+
+            if affected_rows > 0:
+                print(f"[EXTRACTED] ✓ Marked {filename} as {task} extracted ({affected_rows} rows updated)")
+            else:
+                print(f"[WARNING] No rows updated for {filename} (run_id={self.run_id})")
+        except Exception as e:
+            print(f"[ERROR] Failed to mark document as extracted: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _verify_extraction_output(self, filename: str, task: str) -> bool:
+        """Verify if extraction actually produced output files for a given task."""
+        filename_no_ext = os.path.splitext(filename)[0]
+        output_path = self.output_structure.get(task if task != "hierarchy" else "hierarchy")
+        
+        if not output_path or not os.path.exists(output_path):
+            print(f"[DEBUG] Output path does not exist: {output_path}")
+            return False
+        
+        try:
+            if task == "metadata":
+                # Check for metadata_{filename}.json
+                expected_file = os.path.join(output_path, f"metadata_{filename_no_ext}.json")
+                exists = os.path.isfile(expected_file)
+                print(f"[DEBUG] Checking metadata: {expected_file} → {'✓ exists' if exists else '✗ missing'}")
+                return exists
+            
+            elif task == "text":
+                # Check for text_{filename}.mmd
+                expected_file = os.path.join(output_path, f"text_{filename_no_ext}.mmd")
+                exists = os.path.isfile(expected_file)
+                print(f"[DEBUG] Checking text: {expected_file} → {'✓ exists' if exists else '✗ missing'}")
+                return exists
+            
+            elif task == "figures":
+                # Check for figures_{filename}/ directory with images
+                expected_dir = os.path.join(output_path, f"figures_{filename_no_ext}")
+                if os.path.isdir(expected_dir):
+                    files = os.listdir(expected_dir)
+                    has_images = any(f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.gif')) for f in files)
+                    print(f"[DEBUG] Checking figures: {expected_dir} → {'✓ has images' if has_images else '✗ no images'}")
+                    return has_images
+                print(f"[DEBUG] Checking figures: {expected_dir} → ✗ missing")
+                return False
+            
+            elif task == "hierarchy":
+                # Check for hierarchy_{filename}/ directory with content
+                expected_dir = os.path.join(output_path, f"hierarchy_{filename_no_ext}")
+                if os.path.isdir(expected_dir):
+                    files = os.listdir(expected_dir)
+                    has_content = len(files) > 0
+                    print(f"[DEBUG] Checking hierarchy: {expected_dir} → {'✓ has content' if has_content else '✗ empty'}")
+                    return has_content
+                print(f"[DEBUG] Checking hierarchy: {expected_dir} → ✗ missing")
+                return False
+            
+            elif task == "formulas":
+                # Check for formulas_{filename}/ directory with content
+                expected_dir = os.path.join(output_path, f"formulas_{filename_no_ext}")
+                if os.path.isdir(expected_dir):
+                    files = os.listdir(expected_dir)
+                    has_content = len(files) > 0
+                    print(f"[DEBUG] Checking formulas: {expected_dir} → {'✓ has content' if has_content else '✗ empty'}")
+                    return has_content
+                print(f"[DEBUG] Checking formulas: {expected_dir} → ✗ missing")
+                return False
+            
+            elif task == "shrinks":
+                # Check for shrinks_{filename}/ directory with chunks
+                expected_dir = os.path.join(output_path, f"shrinks_{filename_no_ext}")
+                if os.path.isdir(expected_dir):
+                    files = [f for f in os.listdir(expected_dir) if f.startswith('chunk_')]
+                    has_chunks = len(files) > 0
+                    print(f"[DEBUG] Checking shrinks: {expected_dir} → {'✓ has chunks' if has_chunks else '✗ no chunks'}")
+                    return has_chunks
+                print(f"[DEBUG] Checking shrinks: {expected_dir} → ✗ missing")
+                return False
+            
+            return False
+            
+        except Exception as e:
+            print(f"[ERROR] Error verifying extraction output: {e}")
+            return False
+
+    def __del__(self):
+        """Close database connection when object is destroyed."""
+        if self.db_connection:
+            try:
+                self.db_connection.close()
+                print("[INFO] Database connection closed")
+            except:
+                pass
 
     # -------------------- Metadata Extraction --------------------
 
@@ -602,6 +810,12 @@ class DocProcExtractor:
 
         os.makedirs(self.output_structure[match_task[task]["output"]], exist_ok=True)
 
+        total_files = len(self.files)
+        processed = 0
+
+        # Initialize progress to 0
+        self._update_progress(task, 0, total_files)
+
         for file in self.files:
             input_path = os.path.join(self.folder_path, file)
             filename_no_ext, _ = os.path.splitext(file)
@@ -609,9 +823,18 @@ class DocProcExtractor:
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
             print(f"[TASK] Running '{task}' on {file}")
-            match_task[task]["function"](
-                input_path, output_path, **match_task[task]["kwargs"]
-            )
+            try:
+                match_task[task]["function"](
+                    input_path, output_path, **match_task[task]["kwargs"]
+                )
+                # Mark as extracted after successful completion
+                self._mark_document_extracted(file, task)
+            except Exception as e:
+                print(f"[ERROR] Failed to extract {task} from {file}: {e}")
+
+            # Update progress after each file
+            processed += 1
+            self._update_progress(task, processed, total_files)
 
     # -------------------- Main Pipeline --------------------
 

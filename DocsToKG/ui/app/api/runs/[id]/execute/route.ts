@@ -85,6 +85,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (hierarchyPath) args.push('--hierarchy-path', hierarchyPath);
     if (shrinksPath) args.push('--shrinks-path', shrinksPath);
     if (validTasks.length > 0) args.push('--valid-tasks', ...validTasks);
+    args.push('--run-id', String(runId));
+    args.push('--project-name', projectName);
+    args.push('--api-url', process.env.API_URL || 'http://localhost:3000');
     // include --no-pipeline only when true (user requested disabling); per requirement it's False, so skip
     if (noPipelineFlag) args.push('--no-pipeline');
 
@@ -92,7 +95,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const python = process.env.PYTHON || 'python3';
     const child = spawn(python, args, {
       detached: true,
-      stdio: 'ignore'
+      stdio: 'ignore',
+      env: {
+        ...process.env,
+        DB_HOST: process.env.DB_HOST || 'localhost',
+        DB_PORT: process.env.DB_PORT || '3308',
+        DB_NAME: process.env.DB_NAME || 'docs_to_kg',
+        DB_USER: process.env.DB_USER || 'admin',
+        DB_PASSWORD: process.env.DB_PASSWORD || 'admin',
+        API_URL: process.env.API_URL || 'http://localhost:3000',
+      }
     });
     child.unref();
 

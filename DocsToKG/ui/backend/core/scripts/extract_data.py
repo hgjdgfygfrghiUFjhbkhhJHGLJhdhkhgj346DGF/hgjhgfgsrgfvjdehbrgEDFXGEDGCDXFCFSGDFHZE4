@@ -1,6 +1,8 @@
 import argparse
 from pathlib import Path
 from doc_proc_extractor import DocProcExtractor
+import requests
+import os
 
 
 def parse_args():
@@ -63,6 +65,30 @@ def parse_args():
         help="Disable pipeline execution",
     )
 
+    parser.add_argument(
+        "--run-id",
+        type=int,
+        required=False,
+        default=None,
+        help="Run ID for progress tracking (optional)",
+    )
+
+    parser.add_argument(
+        "--project-name",
+        type=str,
+        required=False,
+        default=None,
+        help="Project name for verification API call (optional)",
+    )
+
+    parser.add_argument(
+        "--api-url",
+        type=str,
+        required=False,
+        default="http://localhost:3000",
+        help="API base URL for verification (optional)",
+    )
+
     return parser.parse_args()
 
 
@@ -88,14 +114,16 @@ def main():
     if not Path(folder_path).exists():
         raise SystemExit(f"Input folder does not exist: {folder_path}")
 
+    l = args.valid_tasks
+    l.append("shrinks")
+    l.append("hierarchy")
     dpex = DocProcExtractor(
         folder_path=folder_path,
         output_structure=output_structure,
         apply_pipeline=not args.no_pipeline,
-        valid_tasks=args.valid_tasks,
+        valid_tasks=l,
+        run_id=args.run_id,
     )
-
-    dpex.run()
 
 
 if __name__ == "__main__":

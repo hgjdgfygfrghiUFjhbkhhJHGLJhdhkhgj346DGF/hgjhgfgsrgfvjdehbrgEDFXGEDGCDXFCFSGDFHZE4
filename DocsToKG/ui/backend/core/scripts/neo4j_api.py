@@ -756,7 +756,9 @@ AURA_INSTANCEID="0e0b1a48"
 AURA_INSTANCENAME="Instance03"
 instance = Neo4jAPI(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE, aura_ds=True)
 
-instance.create_lexical_graph("../results/hierarchy/hierarchy_sample_1", embedding_provider={"provider": "ollama", "model_name": "llama3.1:latest"}, llm={"provider": "ollama", "model_name": "llama3.1:latest"})
+instance.create_lexical_graph("../results/hierarchy/hierarchy_sample_1", 
+                              embedding_provider={"provider": "ollama", "model_name": "llama3.1:latest"}, 
+                              llm={"provider": "ollama", "model_name": "llama3.1:latest"})
 
 
 # instance.close()

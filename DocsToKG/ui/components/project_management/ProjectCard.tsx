@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Star, 
   Folder, 
@@ -10,6 +10,18 @@ import {
 } from "lucide-react";
 import { useTheme } from "../themes";
 import { Project } from "./ProjectManagement";
+
+interface RunProgress {
+  runId: number;
+  isExecuted: boolean;
+  tasks: {
+    metadata: { enabled: boolean; progress: number };
+    text: { enabled: boolean; progress: number };
+    figures: { enabled: boolean; progress: number };
+    tables: { enabled: boolean; progress: number };
+    formulas: { enabled: boolean; progress: number };
+  };
+}
 
 interface ProjectCardProps {
   project: Project;
@@ -27,6 +39,32 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   isActive = false
 }) => {
   const { themeClasses } = useTheme();
+  const [runProgress, setRunProgress] = useState<RunProgress | null>(null);
+
+  useEffect(() => {
+    const fetchRunProgress = async () => {
+      try {
+        const res = await fetch(`/api/projects/${encodeURIComponent(project.name)}/run-progress`, {
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.progress) {
+            setRunProgress(data.progress);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch run progress:', err);
+      }
+    };
+
+    // Fetch initially and set up polling if project is processing
+    if (project.status === 'processing' || project.status === 'analyzing') {
+      fetchRunProgress();
+      const interval = setInterval(fetchRunProgress, 3000); // Poll every 3 seconds
+      return () => clearInterval(interval);
+    }
+  }, [project.name, project.status]);
 
   const getStatusColor = (status: Project["status"]) => {
     switch (status) {
@@ -121,6 +159,82 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             style={{ width: `${project.progress}%` }}
           />
         </div>
+
+        {/* Extraction Progress Bars - Only show if tasks are running */}
+        {runProgress && !runProgress.isExecuted && (
+          <div className="mt-3 space-y-2">
+            {runProgress.tasks.metadata.enabled && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600">Metadata</span>
+                  <span className="text-xs text-gray-500">{Math.round(runProgress.tasks.metadata.progress)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden bg-gray-200">
+                  <div 
+                    className="h-full bg-blue-500 transition-all"
+                    style={{ width: `${runProgress.tasks.metadata.progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {runProgress.tasks.text.enabled && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600">Text</span>
+                  <span className="text-xs text-gray-500">{Math.round(runProgress.tasks.text.progress)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden bg-gray-200">
+                  <div 
+                    className="h-full bg-green-500 transition-all"
+                    style={{ width: `${runProgress.tasks.text.progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {runProgress.tasks.figures.enabled && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600">Figures</span>
+                  <span className="text-xs text-gray-500">{Math.round(runProgress.tasks.figures.progress)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden bg-gray-200">
+                  <div 
+                    className="h-full bg-purple-500 transition-all"
+                    style={{ width: `${runProgress.tasks.figures.progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {runProgress.tasks.tables.enabled && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600">Tables</span>
+                  <span className="text-xs text-gray-500">{Math.round(runProgress.tasks.tables.progress)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden bg-gray-200">
+                  <div 
+                    className="h-full bg-orange-500 transition-all"
+                    style={{ width: `${runProgress.tasks.tables.progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {runProgress.tasks.formulas.enabled && (
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600">Formulas</span>
+                  <span className="text-xs text-gray-500">{Math.round(runProgress.tasks.formulas.progress)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden bg-gray-200">
+                  <div 
+                    className="h-full bg-pink-500 transition-all"
+                    style={{ width: `${runProgress.tasks.formulas.progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Stats */}

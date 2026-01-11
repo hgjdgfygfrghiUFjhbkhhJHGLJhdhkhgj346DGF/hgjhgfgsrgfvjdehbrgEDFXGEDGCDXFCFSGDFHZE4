@@ -23,6 +23,7 @@ import {
 import { useTheme } from "../themes";
 import { Project } from "./ProjectManagement";
 import { Database } from "lucide-react";
+import RunsTable from "./RunsTable";
 
 interface ProjectDetailProps {
   project: Project;
@@ -169,9 +170,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         {/* Left Column - Project Info */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           {/* Project Header */}
           <div className={`p-6 rounded-lg border ${themeClasses.border.default}`}>
             {isEditing ? (
@@ -304,6 +305,12 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <p className="text-sm font-medium">{formatDate(project.updatedAt)}</p>
               <p className="text-xs text-gray-500">Last Updated</p>
             </div>
+          </div>
+
+          {/* Runs Table */}
+          <div className={`p-6 rounded-lg border ${themeClasses.border.default}`}>
+            <h3 className="font-semibold mb-4">Extraction Runs</h3>
+            <RunsTable projectName={project.name} />
           </div>
         </div>
 
