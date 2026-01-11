@@ -620,23 +620,23 @@ class DocProcExtractor:
             self.extract_data(task)
 
 
-# -------------------- Script Entry --------------------
+# # -------------------- Script Entry --------------------
 
-if __name__ == "__main__":
-    folder_path = "../results/raw"
-    output_structure = {
-        "metadata": "../results/metadata",
-        "text": "../results/text",
-        "formulas": "../results/formulas",
-        "figures": "../results/figures",
-        "hierarchy": "../results/hierarchy",
-        "shrinks": "../results/shrinks"
-    }
-    valid_tasks = ["shrinks"]
+# if __name__ == "__main__":
+#     folder_path = "../results/raw"
+#     output_structure = {
+#         "metadata": "../results/metadata",
+#         "text": "../results/text",
+#         "formulas": "../results/formulas",
+#         "figures": "../results/figures",
+#         "hierarchy": "../results/hierarchy",
+#         "shrinks": "../results/shrinks"
+#     }
+#     valid_tasks = ["shrinks"]
 
-    dpex = DocProcExtractor(
-        folder_path=folder_path,
-        output_structure=output_structure,
-        apply_pipeline=True,
-        valid_tasks=valid_tasks,
-    )
+#     dpex = DocProcExtractor(
+#         folder_path=folder_path,
+#         output_structure=output_structure,
+#         apply_pipeline=True,
+#         valid_tasks=valid_tasks,
+#     )
