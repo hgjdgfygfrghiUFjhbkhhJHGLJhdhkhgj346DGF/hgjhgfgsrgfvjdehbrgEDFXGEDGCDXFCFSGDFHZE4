@@ -58,13 +58,15 @@ def parse_args():
     parser.add_argument(
         "--allowed-nodes",
         nargs="+",
-        required=False
+        required=False,
+        default=""
     )
 
     parser.add_argument(
         "--allowed-relationships",
         nargs="+",
-        required=False
+        required=False,
+        default=""
     )
 
     parser.add_argument(
@@ -126,7 +128,7 @@ def main():
         if not os.path.isfile(file_path):
             continue
 
-        llm_graph_builder.upload_file(file_path)
+        llm_graph_builder.upload_file(file_path, model=f"{args.llm_provider}_{args.llm_model}")
 
         llm_graph_builder.generate_graph(
             file_name=os.path.basename(file_path),
@@ -135,8 +137,9 @@ def main():
             allowed_relationships=args.allowed_relationships,
             additional_instructions=args.additional_instructions,
             token_chunk_size=args.chunk_size,
-            token_chunk_overlap=args.chunk_overlap,
-            meta_label=args.domain_meta_label
+            chunk_overlap=args.chunk_overlap,
+            meta_label=args.domain_meta_label,
+            tmp_results="~/.luminah/tmp_nodes.pkl"
         )
 
 

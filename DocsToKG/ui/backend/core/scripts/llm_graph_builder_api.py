@@ -11,6 +11,7 @@ class LLMGraphBuilderAPI:
         self.password = password
         self.database = database
         self.url = url
+        self.uri = neo4j_uri
         self.headers = {
             "accept": "application/json, text/plain, */*",
             "Origin": "https://llm-graph-builder.neo4jlabs.com",
@@ -26,13 +27,15 @@ class LLMGraphBuilderAPI:
 
         return element_ids
 
-    def upload_file(self, file_path):
+    def upload_file(self, file_path, model):
         url = f"{self.url}/upload"
         
         file_name = os.path.basename(file_path)
 
         # Fields required by the backend
         data = {
+            "file": "(binary)",
+            "model": model,
             "chunkNumber": "1",
             "totalChunks": "1",
             "originalname": file_name,
@@ -116,8 +119,8 @@ class LLMGraphBuilderAPI:
         file_name,
         tmp_results = None,
         model="openai_gpt_4.1",
-        allowed_nodes=None,
-        allowed_relationship=None,
+        allowed_nodes="",
+        allowed_relationships="",
         token_chunk_size=200,
         chunk_overlap=10,
         chunks_to_combine=1,
@@ -134,7 +137,7 @@ class LLMGraphBuilderAPI:
             model (str): LLM model to use (default "openai_gpt_4.1").
             allowed_nodes (list): Optional list of allowed node types.
                 Example: ["Person", "Organization", "Location"]
-            allowed_relationship (list): Optional list of allowed relationships as triplets.
+            allowed_relationships (list): Optional list of allowed relationships as triplets.
                 IMPORTANT: Must be in format [source_type, relationship, target_type, ...]
                 Example: ["Person", "WORKS_AT", "Organization", "Person", "LIVES_IN", "Location"]
                 Length must be a multiple of 3.
@@ -149,17 +152,20 @@ class LLMGraphBuilderAPI:
             dict: Response from the server
         """
         url = f"{self.url}/extract"
+        print("---------------------------------")
+        print(allowed_nodes, allowed_relationships)
 
-        # Validate allowed_relationship format
-        if allowed_relationship is not None:
-            if len(allowed_relationship) % 3 != 0:
+        # Validate allowed_relationships format
+        if len(allowed_relationships) > 0:
+            if len(allowed_relationships) % 3 != 0:
                 return {
                     "success": False,
-                    "error": f"allowed_relationship must be a multiple of 3. Got {len(allowed_relationship)} items. "
+                    "error": f"allowed_relationships must be a multiple of 3. Got {len(allowed_relationships)} items. "
                             f"Format: [source_type, relationship, target_type, ...]",
                     "status_code": None,
                     "response": None
                 }
+        
 
         data = {
             "model": model,
@@ -173,7 +179,7 @@ class LLMGraphBuilderAPI:
             "chunk_overlap": chunk_overlap,
             "chunks_to_combine": chunks_to_combine,
             "allowedNodes": allowed_nodes,
-            "allowedRelationship": allowed_relationship,
+            "allowedRelationship": allowed_relationships,
             "retry_condition": retry_condition or "",
             "additional_instructions": additional_instructions or ""
         }
@@ -234,7 +240,7 @@ class LLMGraphBuilderAPI:
                 # Link the lexical graph to the domain graph
                 # Select only the chunks
                 query = """
-                MATCH (n:Chunk)
+                MATCH (n:Segment)
                 RETURN n;
                 """
                 chunks = self.neo4j_api.execute_query(query)[0]
@@ -343,35 +349,24 @@ class LLMGraphBuilderAPI:
 
 
 # # Example usage
-# if __name__ == "__main__":
-#     url = "https://prodprocessing-backend-967196130891.us-central1.run.app"
-#     file_path = "Neo4j-3e96bf6c-Created-2025-11-26.txt"
-#     username = "neo4j"
-#     password = "WwO7UslE8DzciMfGWIM4qkcp3scqb4j-ZtuGL_RMyo0"
-#     database = "neo4j"
-#     neo4j_uri = "neo4j+s://0e0b1a48.databases.neo4j.io"
+if __name__ == "__main__":
+    # url = "https://prodprocessing-backend-967196130891.us-central1.run.app"
+    # file_path = "Neo4j-3e96bf6c-Created-2025-11-26.txt"
+    # username = "neo4j"
+    # password = "zyHLoucQ5CPrKbW8NrJ_GWhLD-3OzCliOev1tEdbf08"
+    # database = "neo4j"
+    # neo4j_uri = "neo4j+s://bffb5e09.databases.neo4j.io"
 
-#     llm_graph_builder = LLMGraphBuilderAPI(
-#         username=username,
-#         password=password,
-#         database=database,
-#         url=url,
-#         neo4j_uri=neo4j_uri
+    # llm_graph_builder = LLMGraphBuilderAPI(
+    #     username=username,
+    #     password=password,
+    #     database=database,
+    #     url=url,
+    #     neo4j_uri=neo4j_uri
     # )
-    
-    # Example 1: No restrictions (let the LLM decide)
-    # response = llm_graph_builder.generate_graph("chunk_12.txt")
-    
-    # Example 2: With node restrictions
-    # allowed_nodes = ["Person", "Organization", "Location", "Event", "Concept"]
-    # response = llm_graph_builder.generate_graph(
-    #     "chunk_12.txt",
-    #     allowed_nodes=allowed_nodes
-    # )
-    
-    # Example 3: With node and relationship restrictions
+  
     allowed_nodes = ""
-    allowed_relationship = ""
+    allowed_relationships = ""
     additional_instructions = """
 You are a sophisticated semantic analysis engine designed to perform comprehensive entity extraction and relationship identification from any given text. Your primary function is to analyze the raw semantic content while systematically disregarding all aspects related to text structure, formatting, and linguistic presentation.
 
@@ -454,12 +449,13 @@ Ensure all extracted entities and relationships meet these quality standards:
 
 Process the input text through this comprehensive semantic analysis framework to construct a complete representation of the conceptual landscape, focusing exclusively on meaningful entities and their authentic relationships while systematically excluding all presentational and structural artifacts.
     """
-    
+    # llm_graph_builder.upload_file("/home/billal-mokhtari/.luminah/shrinks_documents/shrinks_raw_2601-04312v1-1/chunk_1.txt", "openai_gpt_5_mini")
     # response = llm_graph_builder.generate_graph(
-    #     "chunk_12.txt",
+    #     "chunk_1.txt",
     #     tmp_results="~/.luminah/tmp_nodes.pkl",
+    #     model="openai_gpt_5_mini",
     #     allowed_nodes=allowed_nodes,
-    #     allowed_relationship=allowed_relationship,
+    #     allowed_relationships=allowed_relationships,
     #     additional_instructions=additional_instructions
     # )
     # response = llm_graph_builder.graph_post_process(["materialize_text_chunk_similarities","enable_hybrid_search_and_fulltext_search_in_bloom","materialize_entity_similarities"])

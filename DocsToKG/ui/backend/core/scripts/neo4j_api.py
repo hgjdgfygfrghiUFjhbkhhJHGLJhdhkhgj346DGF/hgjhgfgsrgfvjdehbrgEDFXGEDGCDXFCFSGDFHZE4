@@ -64,6 +64,7 @@ def process_content_file(
     database: str,
     text_splitter: CharacterTextSplitter,
     embeddings_model,
+    meta_label
 ) -> List[str]:
     """
     Process content.txt file: chunk it, create embeddings, and create nodes.
@@ -103,10 +104,19 @@ def process_content_file(
                 embedding = [0.0] * 1536
             
             # Create chunk node
+            query = f"""
+            MERGE (c:Segment:{meta_label} {{id: $id}})
+            SET c.text = $text,
+                c.embedding = $embedding,
+                c.index = $index
+            """
+
             session.run(
-                "MERGE (c:Chunk {id: $id}) "
-                "SET c.text = $text, c.embedding = $embedding, c.index = $index",
-                id=chunk_id, text=chunk_text, embedding=embedding, index=idx
+                query,
+                id=chunk_id,
+                text=chunk_text,
+                embedding=embedding,
+                index=idx,
             )
             chunk_ids.append(chunk_id)
             
@@ -582,9 +592,9 @@ class Neo4jAPI:
             vector_sim_func: Similarity function for vector index (cosine, euclidean)
             level_labels: Labels for each level (H1, H2, etc.)
         """
-        # Load all documents
-        loader = DirectoryLoader(folder_path, glob="**/*.txt")
-        docs = loader.load()
+        # # Load all documents
+        # loader = DirectoryLoader(folder_path, glob="**/*.txt")
+        # docs = loader.load()
         
         # Initialize text splitter
         text_splitter = CharacterTextSplitter(
@@ -618,7 +628,7 @@ class Neo4jAPI:
             
             session.run(
                 f"CREATE VECTOR INDEX chunk_embedding_index IF NOT EXISTS "
-                f"FOR (c:Chunk) ON c.embedding "
+                f"FOR (c:Segment) ON c.embedding "
                 f"OPTIONS {{indexConfig: {{`vector.dimensions`: {vector_dim}, "
                 f"`vector.similarity_function`: '{vector_sim_func}'}}}}"
             )
@@ -642,7 +652,8 @@ class Neo4jAPI:
                 self.driver,
                 self.database,
                 text_splitter,
-                embedding_model
+                embedding_model,
+                meta_label=meta_label
             )
         
         # Track nodes at each level for NEXT relationships
@@ -709,7 +720,8 @@ class Neo4jAPI:
                                 self.driver,
                                 self.database,
                                 text_splitter,
-                                embedding_model
+                                embedding_model,
+                                meta_label=meta_label
                             )
                         
                         # Recursively process subfolders
@@ -748,17 +760,17 @@ class Neo4jAPI:
 
 
 
-# NEO4J_URI="neo4j+s://0e0b1a48.databases.neo4j.io"
+# NEO4J_URI="neo4j+s://bffb5e09.databases.neo4j.io"
 # NEO4J_USERNAME="neo4j"
-# NEO4J_PASSWORD="WwO7UslE8DzciMfGWIM4qkcp3scqb4j-ZtuGL_RMyo0"
+# NEO4J_PASSWORD="zyHLoucQ5CPrKbW8NrJ_GWhLD-3OzCliOev1tEdbf08"
 # NEO4J_DATABASE="neo4j"
-# AURA_INSTANCEID="0e0b1a48"
-# AURA_INSTANCENAME="Instance03"
+# AURA_INSTANCEID="bffb5e09"
+# AURA_INSTANCENAME="Instance01"
 # instance = Neo4jAPI(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE, aura_ds=True)
 
-# instance.create_lexical_graph("../results/hierarchy/hierarchy_sample_1", 
+# instance.create_lexical_graph("/home/billal-mokhtari/.luminah/hierarchy_documents/hierarchy_raw_2601-04312v1-1", 
 #                               embedding_provider={"provider": "ollama", "model_name": "llama3.1:latest"}, 
-#                               llm={"provider": "ollama", "model_name": "llama3.1:latest"})
+#                               llm={"provider": "ollama", "model_name": "llama3.1:latest"}, chunk_size=500, chunk_overlap=100)
 
 
 # instance.close()
